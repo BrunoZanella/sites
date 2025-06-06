@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Serviços de Hospedagem - Sistema WhatsApp{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Serviços de Hospedagem</h1>
+    <p class="page-subtitle">Gerencie domínios, hospedagem e SSL dos clientes</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-server"></i>
+            Lista de Serviços
+        </h2>
+        <a href="{% url 'criar_servico_hospedagem' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            Novo Serviço
+        </a>
+    </div>
+    <div class="card-body">
+        <!-- Desktop Table - Visível apenas em desktop -->
+        {% if not request.user_agent.is_mobile %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Domínio</th>
+                        <th>Cliente</th>
+                        <th>Tipo</th>
+                        <th>Valor Mensal</th>
+                        <th>Vencimento</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for servico in servicos_hospedagem %}
+                    <tr>
+                        <td>{{ servico.dominio }}</td>
+                        <td>{{ servico.cliente.nome }}</td>
+                        <td>
+                            {% if servico.tipo == 'hospedagem' %}
+                                <span class="badge bg-primary">Hospedagem</span>
+                            {% elif servico.tipo == 'dominio' %}
+                                <span class="badge bg-info">Domínio</span>
+                            {% elif servico.tipo == 'ssl' %}
+                                <span class="badge bg-success">SSL</span>
+                            {% elif servico.tipo == 'email' %}
+                                <span class="badge bg-warning">Email</span>
+                            {% endif %}
+                        </td>
+                        <td>R$ {{ servico.valor_mensal|floatformat:2 }}</td>
+                        <td>{{ servico.data_vencimento|date:"d/m/Y" }}</td>
+                        <td>
+                            {% if servico.status == 'ativo' %}
+                                <span class="status-badge paid">Ativo</span>
+                            {% elif servico.status == 'pendente' %}
+                                <span class="status-badge pending">Pendente</span>
+                            {% elif servico.status == 'vencido' %}
+                                <span class="status-badge overdue">Vencido</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{% url 'detalhes_servico_hospedagem' servico.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'editar_servico_hospedagem' servico.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'excluir_servico_hospedagem' servico.id %}" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-server fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhum serviço de hospedagem cadastrado</p>
+                            <a href="{% url 'criar_servico_hospedagem' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i>
+                                Novo Serviço
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <!-- Mobile Cards - Visível apenas em mobile -->
+        <div class="servicos-mobile-grid">
+            {% for servico in servicos_hospedagem %}
+            <div class="servico-mobile-card">
+                <div class="servico-mobile-header">
+                    <div class="servico-mobile-info">
+                        <h6 class="servico-mobile-title">{{ servico.dominio }}</h6>
+                        <p class="servico-mobile-client">Cliente: {{ servico.cliente.nome }}</p>
+                    </div>
+                    <div class="servico-mobile-badge">
+                        {% if servico.tipo == 'hospedagem' %}
+                            <span class="badge bg-primary">Hospedagem</span>
+                        {% elif servico.tipo == 'dominio' %}
+                            <span class="badge bg-info">Domínio</span>
+                        {% elif servico.tipo == 'ssl' %}
+                            <span class="badge bg-success">SSL</span>
+                        {% elif servico.tipo == 'email' %}
+                            <span class="badge bg-warning">Email</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="servico-mobile-details">
+                    <div class="servico-mobile-detail">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Valor: R$ {{ servico.valor_mensal|floatformat:2 }}/mês</span>
+                    </div>
+                    <div class="servico-mobile-detail">
+                        <i class="fas fa-calendar"></i>
+                        <span>Vencimento: {{ servico.data_vencimento|date:"d/m/Y" }}</span>
+                    </div>
+                    <div class="servico-mobile-detail">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Status: 
+                            {% if servico.status == 'ativo' %}
+                                <span class="status-badge paid">Ativo</span>
+                            {% elif servico.status == 'pendente' %}
+                                <span class="status-badge pending">Pendente</span>
+                            {% elif servico.status == 'vencido' %}
+                                <span class="status-badge overdue">Vencido</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="servico-mobile-actions">
+                    <a href="{% url 'detalhes_servico_hospedagem' servico.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye"></i> Detalhes
+                    </a>
+                    <a href="{% url 'editar_servico_hospedagem' servico.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <a href="{% url 'excluir_servico_hospedagem' servico.id %}" class="btn btn-sm btn-outline-danger">
+                        <i class="fas fa-trash"></i> Excluir
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-4">
+                <i class="fas fa-server fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Nenhum serviço de hospedagem cadastrado</p>
+                <a href="{% url 'criar_servico_hospedagem' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Novo Serviço
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+/* Mobile Cards */
+.servicos-mobile-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.servico-mobile-card {
+    background: rgba(51, 65, 85, 0.1);
+    border: 1px solid rgba(51, 65, 85, 0.2);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.servico-mobile-card:hover {
+    background: rgba(51, 65, 85, 0.15);
+    transform: translateY(-1px);
+}
+
+.servico-mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.servico-mobile-info {
+    flex: 1;
+}
+
+.servico-mobile-title {
+    font-weight: 600;
+    color: var(--foreground);
+    margin: 0;
+    font-size: 1rem;
+}
+
+.servico-mobile-client {
+    color: var(--dark-600);
+    margin: 0.25rem 0 0 0;
+    font-size: 0.875rem;
+}
+
+.servico-mobile-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.servico-mobile-detail {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--dark-600);
+}
+
+.servico-mobile-detail i {
+    width: 1rem;
+    color: var(--primary);
+}
+
+.servico-mobile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.servico-mobile-actions .btn {
+    margin-bottom: 0.25rem;
+}
+</style>
+{% endblock %}

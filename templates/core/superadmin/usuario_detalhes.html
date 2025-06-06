@@ -1,0 +1,769 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalhes do Usuário - Superadmin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">{{ usuario.first_name }} {{ usuario.last_name }}</h1>
+    <p class="page-subtitle">Informações completas e configurações do usuário</p>
+</div>
+
+<div class="user-details-container">
+    <!-- Informações Pessoais -->
+    <div class="card user-info-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-user"></i>
+                Informações Pessoais
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="user-profile">
+                <div class="user-avatar-large">
+                    {% if usuario.is_superuser %}
+                        <i class="fas fa-crown"></i>
+                    {% elif usuario.is_staff %}
+                        <i class="fas fa-user-tie"></i>
+                    {% else %}
+                        <i class="fas fa-user"></i>
+                    {% endif %}
+                </div>
+                <div class="user-basic-info">
+                    <h3 class="user-display-name">{{ usuario.first_name }} {{ usuario.last_name }}</h3>
+                    <p class="user-username">@{{ usuario.username }}</p>
+                    <p class="user-email">{{ usuario.email }}</p>
+                    <div class="user-badges">
+                        {% if usuario.is_active %}
+                            <span class="status-badge paid">Ativo</span>
+                        {% else %}
+                            <span class="status-badge overdue">Inativo</span>
+                        {% endif %}
+                        {% if usuario.is_superuser %}
+                            <span class="status-badge billed">Superusuário</span>
+                        {% endif %}
+                        {% if usuario.is_staff %}
+                            <span class="status-badge pending">Staff</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="user-metadata">
+                <div class="metadata-item">
+                    <i class="fas fa-calendar-plus"></i>
+                    <div class="metadata-content">
+                        <span class="metadata-label">Data de Registro</span>
+                        <span class="metadata-value">{{ usuario.date_joined|date:"d/m/Y H:i" }}</span>
+                    </div>
+                </div>
+                <div class="metadata-item">
+                    <i class="fas fa-clock"></i>
+                    <div class="metadata-content">
+                        <span class="metadata-label">Último Login</span>
+                        <span class="metadata-value">
+                            {% if usuario.last_login %}
+                                {{ usuario.last_login|date:"d/m/Y H:i" }}
+                            {% else %}
+                                Nunca fez login
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="metadata-item">
+                    <i class="fas fa-hashtag"></i>
+                    <div class="metadata-content">
+                        <span class="metadata-label">ID do Usuário</span>
+                        <span class="metadata-value">{{ usuario.id }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="card stats-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-chart-bar"></i>
+                Estatísticas
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="stats-grid-small">
+                <div class="stat-item">
+                    <div class="stat-icon green">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value">{{ stats.total_contatos }}</span>
+                        <span class="stat-label">Contatos</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon primary">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value">{{ stats.contatos_enviados }}</span>
+                        <span class="stat-label">Enviados</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon yellow">
+                        <i class="fas fa-comment-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value">{{ stats.total_mensagens }}</span>
+                        <span class="stat-label">Mensagens</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon red">
+                        <i class="fas fa-list-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value">{{ stats.total_logs }}</span>
+                        <span class="stat-label">Logs</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configurações -->
+    {% if configuracao %}
+    <div class="card config-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-cog"></i>
+                Configurações do Sistema
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="config-section">
+                <h4 class="config-section-title">
+                    <i class="fas fa-table"></i>
+                    Planilha Google Sheets
+                </h4>
+                <div class="config-items">
+                    <div class="config-item">
+                        <span class="config-label">Status da Planilha</span>
+                        <span class="config-value">
+                            {% if configuracao.planilha_criada %}
+                                <span class="status-badge paid">Criada</span>
+                            {% else %}
+                                <span class="status-badge overdue">Não Criada</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">Nome da Planilha</span>
+                        <span class="config-value">{{ configuracao.nome_tabela_sheets|default:"Não configurado" }}</span>
+                    </div>
+                    {% if configuracao.url_planilha %}
+                    <div class="config-item">
+                        <span class="config-label">Link da Planilha</span>
+                        <span class="config-value">
+                            <a href="{{ configuracao.url_planilha }}" target="_blank" class="planilha-link">
+                                <i class="fas fa-external-link-alt"></i>
+                                Abrir Planilha
+                            </a>
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="config-section">
+                <h4 class="config-section-title">
+                    <i class="fas fa-robot"></i>
+                    Configurações Evolution API
+                </h4>
+                {% if evolution_form %}
+                <form method="post" class="evolution-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="evolution_config" value="1">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ evolution_form.url_evolution.id_for_label }}" class="form-label">
+                                <i class="fas fa-server"></i>
+                                URL Principal da Evolution
+                            </label>
+                            {{ evolution_form.url_evolution }}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ evolution_form.instancia_evolution.id_for_label }}" class="form-label">
+                                <i class="fas fa-link"></i>
+                                URL da Instância
+                            </label>
+                            {{ evolution_form.instancia_evolution }}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ evolution_form.api_evolution.id_for_label }}" class="form-label">
+                                <i class="fas fa-code"></i>
+                                URL da API da Instância
+                            </label>
+                            {{ evolution_form.api_evolution }}
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Salvar Configurações Evolution
+                        </button>
+                    </div>
+                </form>
+                {% else %}
+                <div class="config-empty">
+                    <p>Configuração não encontrada para este usuário.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Contatos Recentes -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-users"></i>
+                Contatos Recentes
+            </h2>
+        </div>
+        <div class="card-body">
+            {% for contato in contatos %}
+            <div class="recent-item">
+                <div class="recent-item-content">
+                    <div class="recent-item-title">{{ contato.nome }}</div>
+                    <div class="recent-item-meta">
+                        <span class="recent-item-date">{{ contato.data_criacao|date:"d/m/Y" }}</span>
+                        <span class="recent-item-separator">•</span>
+                        <span class="recent-item-info">{{ contato.numero }}</span>
+                    </div>
+                </div>
+                <div class="recent-item-status">
+                    {% if contato.enviado %}
+                        <span class="status-badge paid">Enviado</span>
+                    {% else %}
+                        <span class="status-badge pending">Pendente</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state-small">
+                <i class="fas fa-users"></i>
+                <p>Nenhum contato encontrado</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Mensagens -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-comment-alt"></i>
+                Mensagens Criadas
+            </h2>
+        </div>
+        <div class="card-body">
+            {% for mensagem in mensagens %}
+            <div class="recent-item">
+                <div class="recent-item-content">
+                    <div class="recent-item-title">{{ mensagem.texto_mensagem|truncatechars:50 }}</div>
+                    <div class="recent-item-meta">
+                        <span class="recent-item-date">{{ mensagem.data_criacao|date:"d/m/Y" }}</span>
+                        <span class="recent-item-separator">•</span>
+                        <span class="recent-item-info">{{ mensagem.quantidade_envios }}/{{ mensagem.quantidade_maxima }} envios</span>
+                    </div>
+                </div>
+                <div class="recent-item-status">
+                    {% if mensagem.ativa %}
+                        <span class="status-badge paid">Ativa</span>
+                    {% else %}
+                        <span class="status-badge overdue">Inativa</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state-small">
+                <i class="fas fa-comment-alt"></i>
+                <p>Nenhuma mensagem encontrada</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Ações -->
+<div class="card actions-card">
+    <div class="card-body">
+        <div class="actions-grid">
+            <a href="{% url 'superadmin_usuarios' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Voltar à Lista
+            </a>
+            <a href="{% url 'editar_usuario' usuario.pk %}" class="btn btn-primary">
+                <i class="fas fa-edit"></i>
+                Editar Usuário
+            </a>
+            {% if not usuario.is_superuser %}
+                <a href="{% url 'superadmin_deletar_usuario' usuario.pk %}" class="btn btn-outline-danger">
+                    <i class="fas fa-trash"></i>
+                    Deletar Usuário
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Container principal */
+.user-details-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Card de informações do usuário */
+.user-info-card {
+    grid-column: 1 / -1;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.user-avatar-large {
+    width: 5rem;
+    height: 5rem;
+    background: linear-gradient(to bottom right, var(--primary), #00b04f);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 8px 25px rgba(0, 151, 57, 0.3);
+}
+
+.user-avatar-large i {
+    color: white;
+    font-size: 2rem;
+}
+
+.user-basic-info {
+    flex: 1;
+}
+
+.user-display-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 0.5rem 0;
+}
+
+.user-username {
+    font-size: 1rem;
+    color: var(--primary);
+    font-weight: 500;
+    margin: 0 0 0.25rem 0;
+}
+
+.user-email {
+    font-size: 0.875rem;
+    color: var(--dark-600);
+    margin: 0 0 1rem 0;
+}
+
+.user-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.user-metadata {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.metadata-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(51, 65, 85, 0.3);
+    border-radius: 0.5rem;
+    border: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.metadata-item i {
+    color: var(--primary);
+    font-size: 1.25rem;
+    width: 1.5rem;
+    text-align: center;
+}
+
+.metadata-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.metadata-label {
+    font-size: 0.75rem;
+    color: var(--dark-600);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.metadata-value {
+    font-size: 0.875rem;
+    color: white;
+    font-weight: 500;
+}
+
+/* Estatísticas */
+.stats-grid-small {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(51, 65, 85, 0.3);
+    border-radius: 0.5rem;
+    border: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.stat-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-icon.green {
+    background: linear-gradient(to bottom right, #10b981, #059669);
+}
+
+.stat-icon.primary {
+    background: linear-gradient(to bottom right, var(--primary), #00b04f);
+}
+
+.stat-icon.yellow {
+    background: linear-gradient(to bottom right, #f59e0b, #d97706);
+}
+
+.stat-icon.red {
+    background: linear-gradient(to bottom right, #ef4444, #dc2626);
+}
+
+.stat-icon i {
+    color: white;
+    font-size: 1rem;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--dark-600);
+}
+
+/* Configurações */
+.config-section {
+    margin-bottom: 2rem;
+}
+
+.config-section:last-child {
+    margin-bottom: 0;
+}
+
+.config-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.config-section-title i {
+    color: var(--primary);
+}
+
+.config-items {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.config-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: rgba(51, 65, 85, 0.3);
+    border-radius: 0.5rem;
+    border: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.config-label {
+    font-size: 0.875rem;
+    color: var(--dark-600);
+    font-weight: 500;
+}
+
+.config-value {
+    font-size: 0.875rem;
+    color: white;
+    font-weight: 500;
+}
+
+.planilha-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.planilha-link:hover {
+    color: #00b04f;
+    transform: translateX(2px);
+}
+
+/* Formulário Evolution */
+.evolution-form {
+    display: grid;
+    gap: 1rem;
+}
+
+.form-row {
+    display: grid;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--dark-600);
+}
+
+.form-label i {
+    color: var(--primary);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+.config-empty {
+    text-align: center;
+    padding: 2rem;
+    color: var(--dark-600);
+}
+
+/* Items recentes */
+.recent-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+.recent-item:last-child {
+    border-bottom: none;
+}
+
+.recent-item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.recent-item-title {
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.recent-item-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--dark-600);
+}
+
+.recent-item-separator {
+    color: var(--dark-500);
+}
+
+.recent-item-status {
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
+
+.empty-state-small {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--dark-600);
+}
+
+.empty-state-small i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--dark-500);
+}
+
+/* Ações */
+.actions-card {
+    grid-column: 1 / -1;
+}
+
+.actions-grid {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-start;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .user-details-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .user-profile {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .user-avatar-large {
+        width: 4rem;
+        height: 4rem;
+    }
+    
+    .user-avatar-large i {
+        font-size: 1.5rem;
+    }
+    
+    .user-display-name {
+        font-size: 1.25rem;
+    }
+    
+    .user-metadata {
+        grid-template-columns: 1fr;
+    }
+    
+    .metadata-item {
+        padding: 0.75rem;
+    }
+    
+    .stats-grid-small {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .stat-item {
+        padding: 0.75rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .stat-icon {
+        width: 2rem;
+        height: 2rem;
+    }
+    
+    .config-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .recent-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .recent-item-status {
+        margin-left: 0;
+        align-self: flex-end;
+    }
+    
+    .actions-grid {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-badges {
+        justify-content: center;
+    }
+    
+    .stats-grid-small {
+        grid-template-columns: 1fr;
+    }
+    
+    .recent-item-meta {
+        flex-wrap: wrap;
+    }
+}
+</style>
+{% endblock %}

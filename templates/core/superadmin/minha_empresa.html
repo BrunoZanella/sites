@@ -1,0 +1,404 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Minha Empresa - Sistema WhatsApp{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Minha Empresa</h1>
+    <p class="page-subtitle">Gerencie gastos, compras, clientes e projetos da sua empresa</p>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stats-card">
+        <div class="stats-card-content">
+            <div class="stats-card-info">
+                <h3 class="stats-card-title">Gastos Fixos Mensais</h3>
+                <p class="stats-card-value">R$ {{ total_gastos_fixos|floatformat:2 }}</p>
+                <div class="stats-card-trend">
+                    <span class="stats-card-trend-label">{{ total_gastos_fixos_count }} gastos ativos</span>
+                </div>
+            </div>
+            <div class="stats-card-icon red">
+                <i class="fas fa-receipt"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card">
+        <div class="stats-card-content">
+            <div class="stats-card-info">
+                <h3 class="stats-card-title">Compras da Empresa</h3>
+                <p class="stats-card-value">R$ {{ total_compras|floatformat:2 }}</p>
+                <div class="stats-card-trend">
+                    <span class="stats-card-trend-label">{{ total_compras_count }} compras registradas</span>
+                </div>
+            </div>
+            <div class="stats-card-icon yellow">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card">
+        <div class="stats-card-content">
+            <div class="stats-card-info">
+                <h3 class="stats-card-title">Receita de Projetos</h3>
+                <p class="stats-card-value">R$ {{ total_receita_projetos|floatformat:2 }}</p>
+                <div class="stats-card-trend">
+                    <span class="stats-card-trend-label">{{ total_projetos_count }} projetos</span>
+                </div>
+            </div>
+            <div class="stats-card-icon green">
+                <i class="fas fa-project-diagram"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card">
+        <div class="stats-card-content">
+            <div class="stats-card-info">
+                <h3 class="stats-card-title">Hospedagem Mensal</h3>
+                <p class="stats-card-value">R$ {{ total_hospedagem_mensal|floatformat:2 }}</p>
+                <div class="stats-card-trend">
+                    <span class="stats-card-trend-label">{{ total_hospedagem_count }} serviços ativos</span>
+                </div>
+            </div>
+            <div class="stats-card-icon primary">
+                <i class="fas fa-server"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Módulos de Gestão -->
+<div class="management-modules">
+    <div class="module-card">
+        <div class="module-header">
+            <div class="module-icon red">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <div class="module-info">
+                <h3 class="module-title">Gastos Fixos</h3>
+                <p class="module-description">Gerencie gastos mensais como energia, internet, salários</p>
+            </div>
+        </div>
+        <div class="module-actions">
+            <a href="{% url 'gastos_fixos' %}" class="btn btn-outline-primary">
+                <i class="fas fa-list"></i> Ver Todos
+            </a>
+            <a href="{% url 'criar_gasto_fixo' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Adicionar
+            </a>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-header">
+            <div class="module-icon yellow">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="module-info">
+                <h3 class="module-title">Compras da Empresa</h3>
+                <p class="module-description">Registre compras de equipamentos, software e materiais</p>
+            </div>
+        </div>
+        <div class="module-actions">
+            <a href="{% url 'compras_empresa' %}" class="btn btn-outline-primary">
+                <i class="fas fa-list"></i> Ver Todas
+            </a>
+            <a href="{% url 'criar_compra_empresa' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Adicionar
+            </a>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-header">
+            <div class="module-icon green">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="module-info">
+                <h3 class="module-title">Clientes</h3>
+                <p class="module-description">Gerencie informações dos seus clientes</p>
+            </div>
+        </div>
+        <div class="module-actions">
+            <a href="{% url 'clientes' %}" class="btn btn-outline-primary">
+                <i class="fas fa-list"></i> Ver Todos
+            </a>
+            <a href="{% url 'criar_cliente' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Adicionar
+            </a>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-header">
+            <div class="module-icon primary">
+                <i class="fas fa-project-diagram"></i>
+            </div>
+            <div class="module-info">
+                <h3 class="module-title">Projetos</h3>
+                <p class="module-description">Controle projetos, parcelas e pagamentos</p>
+            </div>
+        </div>
+        <div class="module-actions">
+            <a href="{% url 'projetos' %}" class="btn btn-outline-primary">
+                <i class="fas fa-list"></i> Ver Todos
+            </a>
+            <a href="{% url 'criar_projeto' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Adicionar
+            </a>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-header">
+            <div class="module-icon blue">
+                <i class="fas fa-server"></i>
+            </div>
+            <div class="module-info">
+                <h3 class="module-title">Serviços de Hospedagem</h3>
+                <p class="module-description">Gerencie domínios, hospedagem e SSL dos clientes</p>
+            </div>
+        </div>
+        <div class="module-actions">
+            <a href="{% url 'servicos_hospedagem' %}" class="btn btn-outline-primary">
+                <i class="fas fa-list"></i> Ver Todos
+            </a>
+            <a href="{% url 'criar_servico_hospedagem' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Adicionar
+            </a>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-header">
+            <div class="module-icon orange">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="module-info">
+                <h3 class="module-title">Dashboard Financeiro</h3>
+                <p class="module-description">Relatórios, gráficos e análise financeira</p>
+            </div>
+        </div>
+        <div class="module-actions">
+            <a href="{% url 'dashboard_financeiro' %}" class="btn btn-primary">
+                <i class="fas fa-chart-bar"></i> Ver Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-header">
+            <div class="module-icon purple">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div class="module-info">
+                <h3 class="module-title">Notificações</h3>
+                <p class="module-description">Alertas de vencimentos e inadimplência</p>
+            </div>
+        </div>
+        <div class="module-actions">
+            <a href="{% url 'notificacoes' %}" class="btn btn-outline-primary">
+                <i class="fas fa-list"></i> Ver Todas
+            </a>
+            {% if notificacoes_nao_lidas > 0 %}
+            <span class="badge bg-danger">{{ notificacoes_nao_lidas }}</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Alertas Importantes -->
+{% if parcelas_vencendo or parcelas_vencidas or hospedagem_vencendo %}
+<div class="card mt-4">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-exclamation-triangle text-warning"></i>
+            Alertas Importantes
+        </h2>
+    </div>
+    <div class="card-body">
+        <div class="alerts-grid">
+            {% if parcelas_vencidas > 0 %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i>
+                <strong>{{ parcelas_vencidas }} parcela(s) vencida(s)</strong>
+                <p>Existem parcelas de projetos em atraso que precisam de atenção.</p>
+                <a href="{% url 'projetos' %}?status=vencida" class="btn btn-sm btn-outline-danger">Ver Parcelas</a>
+            </div>
+            {% endif %}
+
+            {% if parcelas_vencendo > 0 %}
+            <div class="alert alert-warning">
+                <i class="fas fa-clock"></i>
+                <strong>{{ parcelas_vencendo }} parcela(s) vencendo em 7 dias</strong>
+                <p>Parcelas próximas do vencimento que requerem acompanhamento.</p>
+                <a href="{% url 'projetos' %}?status=vencendo" class="btn btn-sm btn-outline-warning">Ver Parcelas</a>
+            </div>
+            {% endif %}
+
+            {% if hospedagem_vencendo > 0 %}
+            <div class="alert alert-info">
+                <i class="fas fa-server"></i>
+                <strong>{{ hospedagem_vencendo }} serviço(s) de hospedagem vencendo</strong>
+                <p>Serviços de hospedagem que precisam de renovação.</p>
+                <a href="{% url 'servicos_hospedagem' %}?status=vencendo" class="btn btn-sm btn-outline-info">Ver Serviços</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+/* Management Modules */
+.management-modules {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.module-card {
+    background: linear-gradient(to bottom right, rgba(30, 41, 59, 0.5), rgba(51, 65, 85, 0.3));
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(51, 65, 85, 0.5);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.module-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    border-color: var(--primary);
+}
+
+.module-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.module-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.module-icon.red {
+    background: linear-gradient(to bottom right, #ef4444, #dc2626);
+}
+
+.module-icon.yellow {
+    background: linear-gradient(to bottom right, #f59e0b, #d97706);
+}
+
+.module-icon.green {
+    background: linear-gradient(to bottom right, #10b981, #059669);
+}
+
+.module-icon.primary {
+    background: linear-gradient(to bottom right, var(--primary), #00b04f);
+}
+
+.module-icon.blue {
+    background: linear-gradient(to bottom right, #3b82f6, #2563eb);
+}
+
+.module-icon.purple {
+    background: linear-gradient(to bottom right, #8b5cf6, #7c3aed);
+}
+
+.module-icon.orange {
+    background: linear-gradient(to bottom right, #f97316, #ea580c);
+}
+
+.module-icon i {
+    color: white;
+    font-size: 1.5rem;
+}
+
+.module-info {
+    flex: 1;
+}
+
+.module-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.module-description {
+    color: var(--dark-600);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.module-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* Alerts Grid */
+.alerts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .management-modules {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .module-card {
+        padding: 1rem;
+    }
+    
+    .module-header {
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .module-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+    
+    .module-icon i {
+        font-size: 1.25rem;
+    }
+    
+    .module-title {
+        font-size: 1.125rem;
+    }
+    
+    .module-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .module-actions .btn {
+        width: 100%;
+    }
+    
+    .alerts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

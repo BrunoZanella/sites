@@ -1,0 +1,815 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload de Contatos - Sistema WhatsApp{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Upload de Contatos</h1>
+    <p class="page-subtitle">Importe contatos em massa através de arquivo Excel ou CSV</p>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-upload"></i>
+                    Importar Arquivo
+                </h2>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="uploadForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.arquivo.id_for_label }}" class="form-label">Selecione o arquivo</label>
+                        <div class="upload-container">
+                            {{ form.arquivo }}
+                            <div class="upload-overlay">
+                                <div class="upload-icon">
+                                    <i class="fas fa-file-excel"></i>
+                                </div>
+                                <div class="upload-text">
+                                    <span class="upload-title">Arraste seu arquivo aqui</span>
+                                    <span class="upload-subtitle">ou clique para selecionar</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text">{{ form.arquivo.help_text }}</div>
+                        {% if form.arquivo.errors %}
+                            <div class="text-danger">{{ form.arquivo.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Como funciona:</h6>
+                        <ol class="mb-0">
+                            <li><strong>Faça upload</strong> do seu arquivo Excel ou CSV</li>
+                            <li><strong>Selecione</strong> as colunas corretas clicando nelas</li>
+                            <li><strong>Processe</strong> os dados para importar todos os contatos</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'contatos' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Voltar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Área de Preview (inicialmente oculta) -->
+<div id="previewArea" class="mt-4" style="display: none;">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-table"></i>
+                <span id="previewFileName">Preview do Arquivo</span>
+                <span id="previewRowCount" class="badge bg-primary ms-2"></span>
+            </h2>
+        </div>
+        <div class="card-body">
+            <!-- Indicadores de Seleção -->
+            <div class="selection-indicators mb-4">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="selection-box" id="nome-indicator">
+                            <div class="selection-number">1</div>
+                            <div class="selection-label">Nome</div>
+                            <div class="selection-column" id="nome-column-name">Nenhuma coluna selecionada</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="selection-box" id="numero-indicator">
+                            <div class="selection-number">2</div>
+                            <div class="selection-label">Número</div>
+                            <div class="selection-column" id="numero-column-name">Nenhuma coluna selecionada</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="selection-box optional" id="enviado-indicator">
+                            <div class="selection-number">3</div>
+                            <div class="selection-label">Enviado (Opcional)</div>
+                            <div class="selection-column" id="enviado-column-name">Nenhuma coluna selecionada</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Preview com scroll próprio -->
+            <div class="table-container">
+                <table class="table table-bordered preview-table" id="previewTable">
+                    <thead id="previewTableHead">
+                        <tr>
+                            <!-- Cabeçalhos serão inseridos via JavaScript -->
+                        </tr>
+                    </thead>
+                    <tbody id="previewTableBody">
+                        <!-- Linhas serão inseridas via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Formulário de Processamento -->
+            <form method="post" id="processForm" class="mt-4">
+                {% csrf_token %}
+                <input type="hidden" name="processar_dados" value="1">
+                <input type="hidden" name="coluna_nome" id="coluna_nome_input">
+                <input type="hidden" name="coluna_numero" id="coluna_numero_input">
+                <input type="hidden" name="coluna_enviado" id="coluna_enviado_input">
+                <input type="hidden" name="colunas_originais" id="colunas_originais_input">
+                <input type="hidden" name="mapeamento_colunas" id="mapeamento_colunas_input">
+                
+                <div class="d-flex flex-wrap gap-2 justify-content-end mt-4">
+                    <button type="button" class="btn btn-warning" onclick="resetSelections()">
+                        <i class="fas fa-undo"></i> Limpar Seleções
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="processBtn" disabled>
+                        <i class="fas fa-check"></i> Processar Dados
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner">
+        <i class="fas fa-spinner fa-spin"></i>
+    </div>
+    <div class="loading-text">Processando arquivo...</div>
+</div>
+
+<style>
+/* Estilos para upload */
+.upload-container {
+    position: relative;
+    border: 2px dashed rgba(51, 65, 85, 0.5);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    background: rgba(30, 41, 59, 0.2);
+    cursor: pointer;
+}
+
+.upload-container:hover {
+    border-color: var(--primary);
+    background: rgba(0, 151, 57, 0.1);
+}
+
+.upload-container.dragover {
+    border-color: var(--primary);
+    background: rgba(0, 151, 57, 0.2);
+    transform: scale(1.01);
+}
+
+.upload-container input[type="file"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.upload-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    color: var(--dark-500);
+    margin-bottom: 1rem;
+}
+
+.upload-container:hover .upload-icon {
+    color: var(--primary);
+}
+
+.upload-title {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--foreground);
+    margin-bottom: 0.5rem;
+}
+
+.upload-subtitle {
+    display: block;
+    color: var(--dark-600);
+    font-size: 0.875rem;
+}
+
+/* Estilos para a seleção de colunas */
+.selection-indicators {
+    background: linear-gradient(to right, rgba(30, 41, 59, 0.3), rgba(51, 65, 85, 0.2));
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    border: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+.selection-box {
+    background: linear-gradient(to bottom right, rgba(30, 41, 59, 0.5), rgba(51, 65, 85, 0.3));
+    border: 2px solid rgba(51, 65, 85, 0.5);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+}
+
+.selection-box.optional {
+    border-style: dashed;
+    opacity: 0.8;
+}
+
+.selection-box.selected {
+    border-color: var(--primary);
+    background: linear-gradient(to bottom right, rgba(0, 151, 57, 0.2), rgba(0, 176, 79, 0.1));
+    box-shadow: 0 0 20px rgba(0, 151, 57, 0.3);
+}
+
+.selection-number {
+    width: 30px;
+    height: 30px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin: 0 auto 0.5rem;
+    font-size: 0.875rem;
+}
+
+.selection-box.optional .selection-number {
+    background: var(--dark-400);
+}
+
+.selection-box.selected .selection-number {
+    background: #00b04f;
+    transform: scale(1.1);
+}
+
+.selection-label {
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.selection-column {
+    color: var(--dark-600);
+    font-size: 0.75rem;
+    font-style: italic;
+}
+
+.selection-box.selected .selection-column {
+    color: #4ade80;
+    font-weight: 500;
+    font-style: normal;
+}
+
+/* Container com scroll próprio para a tabela */
+.table-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(51, 65, 85, 0.3);
+    background: rgba(30, 41, 59, 0.2);
+}
+
+/* Estilos para a tabela */
+.preview-table {
+    background: transparent;
+    margin-bottom: 0;
+}
+
+.preview-table th,
+.preview-table td {
+    border: 1px solid rgba(51, 65, 85, 0.3);
+    color: var(--foreground);
+    padding: 0.75rem;
+    white-space: nowrap;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.column-header {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    user-select: none;
+    background: rgba(51, 65, 85, 0.3);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.column-header:hover {
+    background: rgba(51, 65, 85, 0.5);
+    transform: translateY(-2px);
+}
+
+.column-header.selected-1 {
+    background: linear-gradient(to bottom, rgba(0, 151, 57, 0.3), rgba(0, 151, 57, 0.2));
+    border-color: var(--primary);
+    color: #4ade80;
+}
+
+.column-header.selected-2 {
+    background: linear-gradient(to bottom, rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0.2));
+    border-color: #3b82f6;
+    color: #60a5fa;
+}
+
+.column-header.selected-3 {
+    background: linear-gradient(to bottom, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.2));
+    border-color: #f59e0b;
+    color: #fbbf24;
+}
+
+.column-content {
+    position: relative;
+}
+
+.column-name {
+    font-weight: 600;
+}
+
+.column-selection-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    border: 2px solid white;
+}
+
+.column-header.selected-2 .column-selection-badge {
+    background: #3b82f6;
+}
+
+.column-header.selected-3 .column-selection-badge {
+    background: #f59e0b;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+    display: none;
+}
+
+.loading-spinner {
+    font-size: 3rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.loading-text {
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+/* Animações */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.column-header.selected-1,
+.column-header.selected-2,
+.column-header.selected-3 {
+    animation: pulse 0.5s ease-in-out;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .selection-indicators {
+        padding: 1rem;
+    }
+    
+    .selection-box {
+        margin-bottom: 0.5rem;
+        padding: 0.75rem;
+        min-height: 80px;
+    }
+    
+    .table-container {
+        max-height: 300px;
+    }
+    
+    .preview-table th,
+    .preview-table td {
+        padding: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .upload-title {
+        font-size: 1rem;
+    }
+    
+    .upload-subtitle {
+        font-size: 0.75rem;
+    }
+    
+    .upload-icon {
+        font-size: 2rem;
+    }
+}
+</style>
+
+<script>
+let selectedColumns = {
+    nome: null,
+    numero: null,
+    enviado: null
+};
+
+let fileData = null;
+let originalColumns = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.querySelector('input[type="file"]');
+    const uploadContainer = document.querySelector('.upload-container');
+    const form = document.getElementById('uploadForm');
+    
+    // Drag and drop
+    uploadContainer.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    });
+    
+    uploadContainer.addEventListener('dragleave', function() {
+        this.classList.remove('dragover');
+    });
+    
+    uploadContainer.addEventListener('drop', function() {
+        this.classList.remove('dragover');
+    });
+    
+    // Detecta mudança no input de arquivo
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            handleFileUpload(this.files[0]);
+        }
+    });
+    
+    // Processa o formulário
+    document.getElementById('processForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Salva o mapeamento de colunas
+        const mapeamento = {
+            nome: selectedColumns.nome,
+            numero: selectedColumns.numero,
+            enviado: selectedColumns.enviado
+        };
+        
+        // Adiciona o mapeamento e colunas originais aos inputs hidden
+        document.getElementById('mapeamento_colunas_input').value = JSON.stringify(mapeamento);
+        document.getElementById('colunas_originais_input').value = JSON.stringify(originalColumns);
+        
+        processData();
+    });
+});
+
+function handleFileUpload(file) {
+    // Mostra loading
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    
+    const formData = new FormData();
+    formData.append('arquivo', file);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch('', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }        
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Salva os dados para uso posterior
+            fileData = data;
+            originalColumns = data.colunas;
+            
+            // Mostra a área de preview
+            document.getElementById('previewArea').style.display = 'block';
+            document.getElementById('previewFileName').textContent = data.arquivo_nome;
+            document.getElementById('previewRowCount').textContent = data.total_linhas + ' linhas';
+            
+            // Preenche a tabela
+            renderPreviewTable(data.colunas, data.linhas);
+            
+            // Auto-seleciona colunas baseado nas sugestões
+            autoSelectColumns(data.sugestoes);
+        } else {
+            alert('Erro ao processar arquivo: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao processar o arquivo. Verifique o console para mais detalhes.');
+    })
+    .finally(() => {
+        document.getElementById('loadingOverlay').style.display = 'none';
+    });
+}
+
+function renderPreviewTable(colunas, linhas) {
+    // Limpa a tabela
+    const thead = document.getElementById('previewTableHead');
+    const tbody = document.getElementById('previewTableBody');
+    
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+    
+    // Adiciona cabeçalhos
+    const headerRow = document.createElement('tr');
+    
+    colunas.forEach((coluna, index) => {
+        const th = document.createElement('th');
+        th.className = 'column-header';
+        th.dataset.column = coluna;
+        th.dataset.index = index;
+        
+        const content = document.createElement('div');
+        content.className = 'column-content';
+        
+        const name = document.createElement('div');
+        name.className = 'column-name';
+        name.textContent = coluna;
+        
+        const badge = document.createElement('div');
+        badge.className = 'column-selection-badge';
+        badge.style.display = 'none';
+        
+        const order = document.createElement('span');
+        order.className = 'selection-order';
+        
+        badge.appendChild(order);
+        content.appendChild(name);
+        content.appendChild(badge);
+        th.appendChild(content);
+        
+        // Adiciona evento de clique
+        th.addEventListener('click', function() {
+            toggleColumnSelection(this);
+        });
+        
+        headerRow.appendChild(th);
+    });
+    
+    thead.appendChild(headerRow);
+    
+    // Adiciona linhas de dados
+    linhas.forEach(linha => {
+        const tr = document.createElement('tr');
+        
+        linha.forEach(valor => {
+            const td = document.createElement('td');
+            td.textContent = valor;
+            tr.appendChild(td);
+        });
+        
+        tbody.appendChild(tr);
+    });
+}
+
+function autoSelectColumns(sugestoes) {
+    const headers = document.querySelectorAll('.column-header');
+    
+    headers.forEach(header => {
+        const columnName = header.dataset.column.toLowerCase();
+        
+        // Verifica se corresponde às sugestões
+        if (columnName.includes(sugestoes.nome.toLowerCase()) && !selectedColumns.nome) {
+            selectColumn(header, 'nome');
+        } else if (columnName.includes(sugestoes.numero.toLowerCase()) && !selectedColumns.numero) {
+            selectColumn(header, 'numero');
+        } else if (columnName.includes(sugestoes.enviado.toLowerCase()) && !selectedColumns.enviado) {
+            selectColumn(header, 'enviado');
+        }
+    });
+    
+    updateUI();
+}
+
+function toggleColumnSelection(header) {
+    const columnName = header.dataset.column;
+    
+    // Verifica se já está selecionada
+    const currentType = getColumnType(columnName);
+    
+    if (currentType) {
+        // Deseleciona
+        deselectColumn(header, currentType);
+    } else {
+        // Seleciona na próxima posição disponível
+        const nextType = getNextAvailableType();
+        if (nextType) {
+            selectColumn(header, nextType);
+        }
+    }
+    
+    updateUI();
+}
+
+function selectColumn(header, type) {
+    const columnName = header.dataset.column;
+    
+    // Remove seleção anterior se existir
+    if (selectedColumns[type]) {
+        const prevHeader = document.querySelector(`[data-column="${selectedColumns[type]}"]`);
+        if (prevHeader) {
+            deselectColumn(prevHeader, type);
+        }
+    }
+    
+    selectedColumns[type] = columnName;
+    
+    // Adiciona classes visuais
+    const orderNumber = getOrderNumber(type);
+    header.classList.add(`selected-${orderNumber}`);
+    
+    // Mostra badge
+    const badge = header.querySelector('.column-selection-badge');
+    badge.style.display = 'flex';
+    badge.querySelector('.selection-order').textContent = orderNumber;
+    
+    // Atualiza indicador
+    updateIndicator(type, columnName, true);
+}
+
+function deselectColumn(header, type) {
+    const columnName = header.dataset.column;
+    
+    selectedColumns[type] = null;
+    
+    // Remove classes visuais
+    header.classList.remove('selected-1', 'selected-2', 'selected-3');
+    
+    // Esconde badge
+    const badge = header.querySelector('.column-selection-badge');
+    badge.style.display = 'none';
+    
+    // Atualiza indicador
+    updateIndicator(type, null, false);
+}
+
+function getColumnType(columnName) {
+    for (const [type, selected] of Object.entries(selectedColumns)) {
+        if (selected === columnName) {
+            return type;
+        }
+    }
+    return null;
+}
+
+function getNextAvailableType() {
+    if (!selectedColumns.nome) return 'nome';
+    if (!selectedColumns.numero) return 'numero';
+    if (!selectedColumns.enviado) return 'enviado';
+    return null;
+}
+
+function getOrderNumber(type) {
+    const order = { nome: 1, numero: 2, enviado: 3 };
+    return order[type];
+}
+
+function updateIndicator(type, columnName, selected) {
+    const indicator = document.getElementById(`${type}-indicator`);
+    const columnNameEl = document.getElementById(`${type}-column-name`);
+    
+    if (selected) {
+        indicator.classList.add('selected');
+        columnNameEl.textContent = columnName;
+    } else {
+        indicator.classList.remove('selected');
+        columnNameEl.textContent = 'Nenhuma coluna selecionada';
+    }
+}
+
+function updateUI() {
+    // Atualiza inputs hidden
+    document.getElementById('coluna_nome_input').value = selectedColumns.nome || '';
+    document.getElementById('coluna_numero_input').value = selectedColumns.numero || '';
+    document.getElementById('coluna_enviado_input').value = selectedColumns.enviado || '';
+    
+    // Habilita/desabilita botão
+    const processBtn = document.getElementById('processBtn');
+    const canProcess = selectedColumns.nome && selectedColumns.numero;
+    processBtn.disabled = !canProcess;
+    
+    if (canProcess) {
+        processBtn.classList.remove('btn-secondary');
+        processBtn.classList.add('btn-primary');
+    } else {
+        processBtn.classList.remove('btn-primary');
+        processBtn.classList.add('btn-secondary');
+    }
+}
+
+function resetSelections() {
+    // Limpa todas as seleções
+    document.querySelectorAll('.column-header').forEach(header => {
+        header.classList.remove('selected-1', 'selected-2', 'selected-3');
+        header.querySelector('.column-selection-badge').style.display = 'none';
+    });
+    
+    // Reset variáveis
+    selectedColumns = { nome: null, numero: null, enviado: null };
+    
+    // Reset indicadores
+    ['nome', 'numero', 'enviado'].forEach(type => {
+        updateIndicator(type, null, false);
+    });
+    
+    updateUI();
+}
+
+function processData() {
+    // Mostra loading
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    
+    const formData = new FormData();
+    formData.append('processar_dados', '1');
+    formData.append('coluna_nome', selectedColumns.nome || '');
+    formData.append('coluna_numero', selectedColumns.numero || '');
+    formData.append('coluna_enviado', selectedColumns.enviado || '');
+    formData.append('colunas_originais', document.getElementById('colunas_originais_input').value);
+    formData.append('mapeamento_colunas', document.getElementById('mapeamento_colunas_input').value);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    // Adiciona o nome do arquivo para referência
+    if (fileData) {
+        formData.append('arquivo_nome', fileData.arquivo_nome);
+    }
+    
+    fetch('', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Redireciona para a página de contatos
+            window.location.href = data.redirect_url;
+        } else {
+            alert('Erro ao processar dados: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao processar os dados. Verifique o console para mais detalhes.');
+    })
+    .finally(() => {
+        document.getElementById('loadingOverlay').style.display = 'none';
+    });
+}
+</script>
+{% endblock %}

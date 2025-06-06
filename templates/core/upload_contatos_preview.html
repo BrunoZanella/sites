@@ -1,0 +1,476 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Preview do Arquivo - Sistema WhatsApp{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Preview do Arquivo</h1>
+    <p class="page-subtitle">Selecione as colunas corretas para importar os dados</p>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-table"></i>
+                    {{ arquivo_nome }} ({{ total_linhas }} linhas)
+                </h2>
+            </div>
+            <div class="card-body">
+                {% if erro %}
+                    <div class="alert alert-danger">{{ erro }}</div>
+                {% endif %}
+                
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle"></i> Como usar:</h6>
+                    <ol class="mb-0">
+                        <li>Clique nas colunas para selecioná-las na ordem: <strong>1º Nome</strong>, <strong>2º Número</strong>, <strong>3º Enviado (opcional)</strong></li>
+                        <li>As colunas selecionadas ficarão coloridas e numeradas</li>
+                        <li>Para deselecionar, clique novamente na coluna</li>
+                        <li>Clique em "Processar Dados" quando terminar</li>
+                    </ol>
+                </div>
+
+                <!-- Indicadores de Seleção -->
+                <div class="selection-indicators mb-4">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="selection-box" id="nome-indicator">
+                                <div class="selection-number">1</div>
+                                <div class="selection-label">Nome</div>
+                                <div class="selection-column" id="nome-column-name">Nenhuma coluna selecionada</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="selection-box" id="numero-indicator">
+                                <div class="selection-number">2</div>
+                                <div class="selection-label">Número</div>
+                                <div class="selection-column" id="numero-column-name">Nenhuma coluna selecionada</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="selection-box optional" id="enviado-indicator">
+                                <div class="selection-number">3</div>
+                                <div class="selection-label">Enviado (Opcional)</div>
+                                <div class="selection-column" id="enviado-column-name">Nenhuma coluna selecionada</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabela de Preview -->
+                <div class="table-responsive">
+                    <table class="table table-bordered preview-table" id="previewTable">
+                        <thead>
+                            <tr>
+                                {% for coluna in colunas %}
+                                <th class="column-header" data-column="{{ coluna }}" data-index="{{ forloop.counter0 }}">
+                                    <div class="column-content">
+                                        <div class="column-name">{{ coluna }}</div>
+                                        <div class="column-selection-badge" style="display: none;">
+                                            <span class="selection-order"></span>
+                                        </div>
+                                    </div>
+                                </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for linha in linhas %}
+                            <tr>
+                                {% for valor in linha %}
+                                <td>{{ valor|truncatechars:30 }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Formulário de Processamento -->
+                <form method="post" id="processForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="processar_dados" value="1">
+                    <input type="hidden" name="coluna_nome" id="coluna_nome_input">
+                    <input type="hidden" name="coluna_numero" id="coluna_numero_input">
+                    <input type="hidden" name="coluna_enviado" id="coluna_enviado_input">
+                    
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a href="{% url 'upload_contatos' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Voltar
+                        </a>
+                        <button type="button" class="btn btn-warning" onclick="resetSelections()">
+                            <i class="fas fa-undo"></i> Limpar Seleções
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="processBtn" disabled>
+                            <i class="fas fa-check"></i> Processar Dados
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos para a seleção de colunas */
+.selection-indicators {
+    background: linear-gradient(to right, rgba(30, 41, 59, 0.3), rgba(51, 65, 85, 0.2));
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    border: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+.selection-box {
+    background: linear-gradient(to bottom right, rgba(30, 41, 59, 0.5), rgba(51, 65, 85, 0.3));
+    border: 2px solid rgba(51, 65, 85, 0.5);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.selection-box.optional {
+    border-style: dashed;
+    opacity: 0.8;
+}
+
+.selection-box.selected {
+    border-color: var(--primary);
+    background: linear-gradient(to bottom right, rgba(0, 151, 57, 0.2), rgba(0, 176, 79, 0.1));
+    box-shadow: 0 0 20px rgba(0, 151, 57, 0.3);
+}
+
+.selection-number {
+    width: 30px;
+    height: 30px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin: 0 auto 0.5rem;
+    font-size: 0.875rem;
+}
+
+.selection-box.optional .selection-number {
+    background: var(--dark-400);
+}
+
+.selection-box.selected .selection-number {
+    background: #00b04f;
+    transform: scale(1.1);
+}
+
+.selection-label {
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.selection-column {
+    color: var(--dark-600);
+    font-size: 0.75rem;
+    font-style: italic;
+}
+
+.selection-box.selected .selection-column {
+    color: #4ade80;
+    font-weight: 500;
+    font-style: normal;
+}
+
+/* Estilos para a tabela */
+.preview-table {
+    background: rgba(30, 41, 59, 0.3);
+    border: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.preview-table th,
+.preview-table td {
+    border: 1px solid rgba(51, 65, 85, 0.3);
+    color: var(--foreground);
+}
+
+.column-header {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    user-select: none;
+    background: rgba(51, 65, 85, 0.3);
+}
+
+.column-header:hover {
+    background: rgba(51, 65, 85, 0.5);
+    transform: translateY(-2px);
+}
+
+.column-header.selected-1 {
+    background: linear-gradient(to bottom, rgba(0, 151, 57, 0.3), rgba(0, 151, 57, 0.2));
+    border-color: var(--primary);
+    color: #4ade80;
+}
+
+.column-header.selected-2 {
+    background: linear-gradient(to bottom, rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0.2));
+    border-color: #3b82f6;
+    color: #60a5fa;
+}
+
+.column-header.selected-3 {
+    background: linear-gradient(to bottom, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.2));
+    border-color: #f59e0b;
+    color: #fbbf24;
+}
+
+.column-content {
+    position: relative;
+}
+
+.column-name {
+    font-weight: 600;
+}
+
+.column-selection-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    border: 2px solid white;
+}
+
+.column-header.selected-2 .column-selection-badge {
+    background: #3b82f6;
+}
+
+.column-header.selected-3 .column-selection-badge {
+    background: #f59e0b;
+}
+
+/* Animações */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.column-header.selected-1,
+.column-header.selected-2,
+.column-header.selected-3 {
+    animation: pulse 0.5s ease-in-out;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .selection-indicators .row {
+        gap: 1rem;
+    }
+    
+    .selection-box {
+        margin-bottom: 1rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+}
+</style>
+
+<script>
+let selectedColumns = {
+    nome: null,
+    numero: null,
+    enviado: null
+};
+
+let selectionOrder = [];
+const maxSelections = 3;
+
+// Sugestões do servidor
+const sugestoes = {{ sugestoes|safe }};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-seleciona colunas baseado nas sugestões
+    autoSelectColumns();
+    
+    // Adiciona event listeners
+    document.querySelectorAll('.column-header').forEach(header => {
+        header.addEventListener('click', function() {
+            toggleColumnSelection(this);
+        });
+    });
+});
+
+function autoSelectColumns() {
+    const headers = document.querySelectorAll('.column-header');
+    
+    headers.forEach(header => {
+        const columnName = header.dataset.column.toLowerCase();
+        
+        // Verifica se corresponde às sugestões
+        if (columnName.includes(sugestoes.nome.toLowerCase()) && !selectedColumns.nome) {
+            selectColumn(header, 'nome');
+        } else if (columnName.includes(sugestoes.numero.toLowerCase()) && !selectedColumns.numero) {
+            selectColumn(header, 'numero');
+        } else if (columnName.includes(sugestoes.enviado.toLowerCase()) && !selectedColumns.enviado) {
+            selectColumn(header, 'enviado');
+        }
+    });
+}
+
+function toggleColumnSelection(header) {
+    const columnName = header.dataset.column;
+    
+    // Verifica se já está selecionada
+    const currentType = getColumnType(columnName);
+    
+    if (currentType) {
+        // Deseleciona
+        deselectColumn(header, currentType);
+    } else {
+        // Seleciona na próxima posição disponível
+        const nextType = getNextAvailableType();
+        if (nextType) {
+            selectColumn(header, nextType);
+        }
+    }
+    
+    updateUI();
+}
+
+function selectColumn(header, type) {
+    const columnName = header.dataset.column;
+    
+    // Remove seleção anterior se existir
+    if (selectedColumns[type]) {
+        const prevHeader = document.querySelector(`[data-column="${selectedColumns[type]}"]`);
+        if (prevHeader) {
+            deselectColumn(prevHeader, type);
+        }
+    }
+    
+    selectedColumns[type] = columnName;
+    
+    // Adiciona classes visuais
+    const orderNumber = getOrderNumber(type);
+    header.classList.add(`selected-${orderNumber}`);
+    
+    // Mostra badge
+    const badge = header.querySelector('.column-selection-badge');
+    badge.style.display = 'flex';
+    badge.querySelector('.selection-order').textContent = orderNumber;
+    
+    // Atualiza indicador
+    updateIndicator(type, columnName, true);
+}
+
+function deselectColumn(header, type) {
+    const columnName = header.dataset.column;
+    
+    selectedColumns[type] = null;
+    
+    // Remove classes visuais
+    header.classList.remove('selected-1', 'selected-2', 'selected-3');
+    
+    // Esconde badge
+    const badge = header.querySelector('.column-selection-badge');
+    badge.style.display = 'none';
+    
+    // Atualiza indicador
+    updateIndicator(type, null, false);
+}
+
+function getColumnType(columnName) {
+    for (const [type, selected] of Object.entries(selectedColumns)) {
+        if (selected === columnName) {
+            return type;
+        }
+    }
+    return null;
+}
+
+function getNextAvailableType() {
+    if (!selectedColumns.nome) return 'nome';
+    if (!selectedColumns.numero) return 'numero';
+    if (!selectedColumns.enviado) return 'enviado';
+    return null;
+}
+
+function getOrderNumber(type) {
+    const order = { nome: 1, numero: 2, enviado: 3 };
+    return order[type];
+}
+
+function updateIndicator(type, columnName, selected) {
+    const indicator = document.getElementById(`${type}-indicator`);
+    const columnNameEl = document.getElementById(`${type}-column-name`);
+    
+    if (selected) {
+        indicator.classList.add('selected');
+        columnNameEl.textContent = columnName;
+    } else {
+        indicator.classList.remove('selected');
+        columnNameEl.textContent = 'Nenhuma coluna selecionada';
+    }
+}
+
+function updateUI() {
+    // Atualiza inputs hidden
+    document.getElementById('coluna_nome_input').value = selectedColumns.nome || '';
+    document.getElementById('coluna_numero_input').value = selectedColumns.numero || '';
+    document.getElementById('coluna_enviado_input').value = selectedColumns.enviado || '';
+    
+    // Habilita/desabilita botão
+    const processBtn = document.getElementById('processBtn');
+    const canProcess = selectedColumns.nome && selectedColumns.numero;
+    processBtn.disabled = !canProcess;
+    
+    if (canProcess) {
+        processBtn.classList.remove('btn-secondary');
+        processBtn.classList.add('btn-primary');
+    } else {
+        processBtn.classList.remove('btn-primary');
+        processBtn.classList.add('btn-secondary');
+    }
+}
+
+function resetSelections() {
+    // Limpa todas as seleções
+    document.querySelectorAll('.column-header').forEach(header => {
+        header.classList.remove('selected-1', 'selected-2', 'selected-3');
+        header.querySelector('.column-selection-badge').style.display = 'none';
+    });
+    
+    // Reset variáveis
+    selectedColumns = { nome: null, numero: null, enviado: null };
+    
+    // Reset indicadores
+    ['nome', 'numero', 'enviado'].forEach(type => {
+        updateIndicator(type, null, false);
+    });
+    
+    updateUI();
+}
+
+// Inicializa a UI
+updateUI();
+</script>
+{% endblock %}

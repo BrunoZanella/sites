@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mensagens - Sistema WhatsApp{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Gerenciar Mensagens</h1>
+    <p class="page-subtitle">Crie e gerencie templates de mensagens para envio</p>
+</div>
+
+<!-- Ações -->
+<div class="mb-4">
+    <a href="{% url 'adicionar_mensagem' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nova Mensagem
+    </a>
+</div>
+
+<!-- Lista de Mensagens -->
+<div class="row">
+    {% for mensagem in mensagens %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h5 class="card-title">Mensagem #{{ mensagem.id }}</h5>
+                    {% if mensagem.ativa %}
+                        <span class="status-badge paid">Ativa</span>
+                    {% else %}
+                        <span class="status-badge overdue">Inativa</span>
+                    {% endif %}
+                </div>
+                
+                <p class="card-text">{{ mensagem.texto_mensagem|truncatechars:100 }}</p>
+                
+                <div class="mb-3">
+                    <small class="text-muted">
+                        <i class="fas fa-paper-plane"></i>
+                        {{ mensagem.quantidade_envios }}/{{ mensagem.quantidade_maxima }} envios
+                    </small>
+                </div>
+                
+                <div class="progress mb-3" style="height: 6px;">
+                    {% widthratio mensagem.quantidade_envios mensagem.quantidade_maxima 100 as progresso %}
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ progresso }}%"></div>
+                </div>
+                
+                <small class="text-muted d-block mb-3">
+                    Criada em {{ mensagem.data_criacao|date:"d/m/Y H:i" }}
+                </small>
+            </div>
+            
+            <div class="card-footer bg-transparent">
+                <div class="btn-group w-100" role="group">
+                    <a href="{% url 'editar_mensagem' mensagem.pk %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <form method="post" action="{% url 'deletar_mensagem' mensagem.pk %}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja deletar esta mensagem?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-trash"></i> Deletar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-comment-alt fa-3x text-muted mb-3"></i>
+                <h5>Nenhuma mensagem encontrada</h5>
+                <p class="text-muted">Crie sua primeira mensagem para começar a enviar para seus contatos.</p>
+                <a href="{% url 'adicionar_mensagem' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Criar Primeira Mensagem
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Paginação -->
+{% if mensagens.has_other_pages %}
+<nav aria-label="Navegação de páginas">
+    <ul class="pagination justify-content-center">
+        {% if mensagens.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ mensagens.previous_page_number }}">Anterior</a>
+            </li>
+        {% endif %}
+        
+        {% for num in mensagens.paginator.page_range %}
+            {% if mensagens.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+            {% elif num > mensagens.number|add:'-3' and num < mensagens.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if mensagens.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ mensagens.next_page_number }}">Próximo</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

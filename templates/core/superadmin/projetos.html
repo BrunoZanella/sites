@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Projetos - Sistema WhatsApp{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Projetos</h1>
+    <p class="page-subtitle">Gerencie projetos e parcelas dos clientes</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-project-diagram"></i>
+            Lista de Projetos
+        </h2>
+        <a href="{% url 'criar_projeto' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            Novo Projeto
+        </a>
+    </div>
+    <div class="card-body">
+        <!-- Desktop Table - Visível apenas em desktop -->
+        {% if not request.user_agent.is_mobile %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Cliente</th>
+                        <th>Valor Total</th>
+                        <th>Status</th>
+                        <th>Progresso</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for projeto in projetos %}
+                    <tr>
+                        <td>{{ projeto.nome }}</td>
+                        <td>{{ projeto.cliente.nome }}</td>
+                        <td>R$ {{ projeto.valor_total|floatformat:2 }}</td>
+                        <td>
+                            {% if projeto.status == 'em_andamento' %}
+                                <span class="status-badge pending">Em andamento</span>
+                            {% elif projeto.status == 'concluido' %}
+                                <span class="status-badge paid">Concluído</span>
+                            {% elif projeto.status == 'cancelado' %}
+                                <span class="status-badge overdue">Cancelado</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ projeto.progresso }}%;" aria-valuenow="{{ projeto.progresso }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted">{{ projeto.progresso }}%</small>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{% url 'detalhes_projeto' projeto.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'editar_projeto' projeto.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'excluir_projeto' projeto.id %}" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhum projeto cadastrado</p>
+                            <a href="{% url 'criar_projeto' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i>
+                                Novo Projeto
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <!-- Mobile Cards - Visível apenas em mobile -->
+        <div class="projetos-mobile-grid">
+            {% for projeto in projetos %}
+            <div class="projeto-mobile-card">
+                <div class="projeto-mobile-header">
+                    <div class="projeto-mobile-info">
+                        <h6 class="projeto-mobile-title">{{ projeto.nome }}</h6>
+                        <p class="projeto-mobile-client">Cliente: {{ projeto.cliente.nome }}</p>
+                    </div>
+                    <div class="projeto-mobile-status">
+                        {% if projeto.status == 'em_andamento' %}
+                            <span class="status-badge pending">Em andamento</span>
+                        {% elif projeto.status == 'concluido' %}
+                            <span class="status-badge paid">Concluído</span>
+                        {% elif projeto.status == 'cancelado' %}
+                            <span class="status-badge overdue">Cancelado</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="projeto-mobile-details">
+                    <div class="projeto-mobile-detail">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Valor: R$ {{ projeto.valor_total|floatformat:2 }}</span>
+                    </div>
+                    <div class="projeto-mobile-detail">
+                        <i class="fas fa-tasks"></i>
+                        <span>Progresso:</span>
+                    </div>
+                    <div class="progress" style="height: 8px; margin-bottom: 0.5rem;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ projeto.progresso }}%;" aria-valuenow="{{ projeto.progresso }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <small class="text-muted">{{ projeto.progresso }}%</small>
+                </div>
+                <div class="projeto-mobile-actions">
+                    <a href="{% url 'detalhes_projeto' projeto.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye"></i> Detalhes
+                    </a>
+                    <a href="{% url 'editar_projeto' projeto.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <a href="{% url 'excluir_projeto' projeto.id %}" class="btn btn-sm btn-outline-danger">
+                        <i class="fas fa-trash"></i> Excluir
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-4">
+                <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Nenhum projeto cadastrado</p>
+                <a href="{% url 'criar_projeto' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Novo Projeto
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+/* Mobile Cards */
+.projetos-mobile-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.projeto-mobile-card {
+    background: rgba(51, 65, 85, 0.1);
+    border: 1px solid rgba(51, 65, 85, 0.2);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.projeto-mobile-card:hover {
+    background: rgba(51, 65, 85, 0.15);
+    transform: translateY(-1px);
+}
+
+.projeto-mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.projeto-mobile-info {
+    flex: 1;
+}
+
+.projeto-mobile-title {
+    font-weight: 600;
+    color: var(--foreground);
+    margin: 0;
+    font-size: 1rem;
+}
+
+.projeto-mobile-client {
+    color: var(--dark-600);
+    margin: 0.25rem 0 0 0;
+    font-size: 0.875rem;
+}
+
+.projeto-mobile-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.projeto-mobile-detail {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--dark-600);
+}
+
+.projeto-mobile-detail i {
+    width: 1rem;
+    color: var(--primary);
+}
+
+.projeto-mobile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.projeto-mobile-actions .btn {
+    margin-bottom: 0.25rem;
+}
+
+/* Progress Bar */
+.progress {
+    background-color: rgba(51, 65, 85, 0.2);
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background-color: var(--primary);
+}
+</style>
+{% endblock %}

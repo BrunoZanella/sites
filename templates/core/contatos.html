@@ -1,0 +1,408 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Contatos - Sistema WhatsApp{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Gerenciar Contatos</h1>
+    <p class="page-subtitle">Visualize e gerencie todos os seus contatos</p>
+</div>
+
+<!-- Filtros e Ações -->
+<div class="card filters-card">
+    <div class="card-body">
+        <form method="get" class="filters-form">
+            <div class="filters-row">
+                <div class="filter-group">
+                    <input type="text" name="busca" class="form-control" placeholder="Buscar por nome ou número..." value="{{ busca }}">
+                </div>
+                <div class="filter-group">
+                    <select name="status" class="form-select">
+                        <option value="">Todos os status</option>
+                        <option value="enviado" {% if status == 'enviado' %}selected{% endif %}>Enviados</option>
+                        <option value="pendente" {% if status == 'pendente' %}selected{% endif %}>Pendentes</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search"></i>
+                        <span class="btn-text">Buscar</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+        
+        <div class="actions-row">
+            <a href="{% url 'adicionar_contato' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i>
+                <span class="btn-text">Adicionar</span>
+            </a>
+            <a href="{% url 'upload_contatos' %}" class="btn btn-success">
+                <i class="fas fa-upload"></i>
+                <span class="btn-text">Upload</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Contatos -->
+<div class="contatos-container">
+    {% for contato in contatos %}
+    <div class="contato-card">
+        <div class="contato-header">
+            <div class="contato-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="contato-info">
+                <h3 class="contato-nome">{{ contato.nome }}</h3>
+                <p class="contato-numero">{{ contato.numero }}</p>
+            </div>
+            <div class="contato-status">
+                {% if contato.enviado %}
+                    <span class="status-badge paid">Enviado</span>
+                {% else %}
+                    <span class="status-badge pending">Pendente</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="contato-details">
+            <div class="detail-item">
+                <i class="fas fa-calendar-plus"></i>
+                <span>Cadastrado em {{ contato.data_criacao|date:"d/m/Y H:i" }}</span>
+            </div>
+            {% if contato.data_envio %}
+            <div class="detail-item">
+                <i class="fas fa-paper-plane"></i>
+                <span>Enviado em {{ contato.data_envio|date:"d/m/Y H:i" }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="contato-actions">
+            <form method="post" action="{% url 'deletar_contato' contato.pk %}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja deletar este contato?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-trash"></i>
+                    <span class="btn-text">Deletar</span>
+                </button>
+            </form>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <h3>Nenhum contato encontrado</h3>
+        <p>Adicione seus primeiros contatos para começar a usar o sistema.</p>
+        <div class="empty-actions">
+            <a href="{% url 'adicionar_contato' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Adicionar Contato
+            </a>
+            <a href="{% url 'upload_contatos' %}" class="btn btn-success">
+                <i class="fas fa-upload"></i> Upload de Arquivo
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Paginação -->
+{% if contatos.has_other_pages %}
+<div class="pagination-container">
+    <nav aria-label="Navegação de páginas">
+        <ul class="pagination">
+            {% if contatos.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ contatos.previous_page_number }}{% if busca %}&busca={{ busca }}{% endif %}{% if status %}&status={{ status }}{% endif %}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            {% endif %}
+            
+            {% for num in contatos.paginator.page_range %}
+                {% if contatos.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > contatos.number|add:'-3' and num < contatos.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if busca %}&busca={{ busca }}{% endif %}{% if status %}&status={{ status }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if contatos.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ contatos.next_page_number }}{% if busca %}&busca={{ busca }}{% endif %}{% if status %}&status={{ status }}{% endif %}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endif %}
+
+<style>
+/* Filtros */
+.filters-card {
+    margin-bottom: 1.5rem;
+}
+
+.filters-form {
+    margin-bottom: 1rem;
+}
+
+.filters-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 1rem;
+    align-items: end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.actions-row {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+/* Container de contatos */
+.contatos-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Card de contato */
+.contato-card {
+    background: linear-gradient(to bottom right, rgba(30, 41, 59, 0.5), rgba(51, 65, 85, 0.3));
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(51, 65, 85, 0.5);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.contato-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 151, 57, 0.2);
+    border-color: var(--primary);
+}
+
+.contato-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.contato-avatar {
+    width: 3rem;
+    height: 3rem;
+    background: linear-gradient(to bottom right, var(--primary), #00b04f);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.contato-avatar i {
+    color: white;
+    font-size: 1.25rem;
+}
+
+.contato-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.contato-nome {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: white;
+    margin: 0 0 0.25rem 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.contato-numero {
+    color: var(--dark-600);
+    margin: 0;
+    font-size: 0.875rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.contato-status {
+    flex-shrink: 0;
+}
+
+.contato-details {
+    margin-bottom: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--dark-600);
+}
+
+.detail-item:last-child {
+    margin-bottom: 0;
+}
+
+.detail-item i {
+    width: 1rem;
+    color: var(--primary);
+}
+
+.contato-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+/* Empty state */
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 1rem;
+    background: linear-gradient(to bottom right, rgba(30, 41, 59, 0.3), rgba(51, 65, 85, 0.2));
+    border: 2px dashed rgba(51, 65, 85, 0.5);
+    border-radius: 0.75rem;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    color: var(--dark-500);
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--dark-600);
+    margin-bottom: 1.5rem;
+}
+
+.empty-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Paginação */
+.pagination-container {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .filters-row {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .actions-row {
+        justify-content: stretch;
+        gap: 0.5rem;
+    }
+    
+    .actions-row .btn {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .contatos-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .contato-card {
+        padding: 1rem;
+    }
+    
+    .contato-header {
+        gap: 0.75rem;
+    }
+    
+    .contato-avatar {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+    
+    .contato-avatar i {
+        font-size: 1rem;
+    }
+    
+    .contato-nome {
+        font-size: 1rem;
+    }
+    
+    .contato-numero {
+        font-size: 0.75rem;
+    }
+    
+    .detail-item {
+        font-size: 0.75rem;
+    }
+    
+    .btn-text {
+        display: none;
+    }
+    
+    .empty-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .empty-actions .btn {
+        width: 100%;
+        max-width: 200px;
+    }
+}
+
+@media (max-width: 480px) {
+    .contato-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .contato-info {
+        text-align: center;
+    }
+    
+    .contato-status {
+        align-self: center;
+    }
+    
+    .actions-row {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}

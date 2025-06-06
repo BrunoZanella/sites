@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Clientes - Sistema WhatsApp{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Clientes</h1>
+    <p class="page-subtitle">Gerencie todos os clientes da empresa</p>
+</div>
+
+<!-- Filtros e Ações -->
+<div class="card filters-card">
+    <div class="card-body">
+        <div class="actions-row">
+            <a href="{% url 'minha_empresa' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                <span class="btn-text">Voltar</span>
+            </a>
+            <a href="{% url 'criar_cliente' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i>
+                <span class="btn-text">Novo Cliente</span>
+            </a>
+        </div>
+        
+        <!-- Filtros de Busca -->
+        <form method="get" class="filters-form">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-group">
+                        <input type="text" 
+                               name="busca" 
+                               value="{{ busca }}" 
+                               placeholder="Buscar por nome, contato ou email..."
+                               class="form-control">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-search"></i>
+                            Buscar
+                        </button>
+                        {% if busca %}
+                            <a href="{% url 'clientes' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i>
+                                Limpar
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de Clientes -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-users"></i>
+            Lista de Clientes
+        </h2>
+        <span class="badge badge-info">
+            Total: {{ clientes.paginator.count }}
+        </span>
+    </div>
+    <div class="card-body">
+        {% if clientes %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nome da Empresa</th>
+                            <th>Contato Principal</th>
+                            <th>Email</th>
+                            <th>Telefone</th>
+                            <th>Data de Criação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cliente in clientes %}
+                            <tr>
+                                <td>
+                                    <strong>{{ cliente.nome_empresa }}</strong>
+                                </td>
+                                <td>{{ cliente.contato_principal }}</td>
+                                <td>
+                                    {% if cliente.email_contato %}
+                                        <a href="mailto:{{ cliente.email_contato }}">
+                                            {{ cliente.email_contato }}
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cliente.telefone_contato %}
+                                        <a href="tel:{{ cliente.telefone_contato }}">
+                                            {{ cliente.telefone_contato }}
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ cliente.data_criacao|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'editar_cliente' cliente.pk %}" 
+                                           class="btn btn-sm btn-outline-primary"
+                                           title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'deletar_cliente' cliente.pk %}" 
+                                           class="btn btn-sm btn-outline-danger"
+                                           title="Deletar"
+                                           onclick="return confirm('Tem certeza que deseja deletar este cliente?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Paginação -->
+            {% if clientes.has_other_pages %}
+                <nav aria-label="Navegação de páginas">
+                    <ul class="pagination justify-content-center">
+                        {% if clientes.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if busca %}&busca={{ busca }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ clientes.previous_page_number }}{% if busca %}&busca={{ busca }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">
+                                {{ clientes.number }} de {{ clientes.paginator.num_pages }}
+                            </span>
+                        </li>
+                        
+                        {% if clientes.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ clientes.next_page_number }}{% if busca %}&busca={{ busca }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ clientes.paginator.num_pages }}{% if busca %}&busca={{ busca }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>Nenhum cliente encontrado</h3>
+                {% if busca %}
+                    <p>Não foram encontrados clientes com os critérios de busca informados.</p>
+                    <a href="{% url 'clientes' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list"></i>
+                        Ver todos os clientes
+                    </a>
+                {% else %}
+                    <p>Você ainda não possui clientes cadastrados.</p>
+                    <a href="{% url 'criar_cliente' %}" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i>
+                        Cadastrar primeiro cliente
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.filters-card {
+    margin-bottom: 1.5rem;
+}
+
+.actions-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.filters-form {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 1rem;
+}
+
+.table th {
+    background-color: #f8fafc;
+    font-weight: 600;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.btn-group .btn {
+    margin-right: 0.25rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+}
+
+.badge {
+    font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+    .actions-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .btn-text {
+        display: none;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+}
+</style>
+{% endblock %}

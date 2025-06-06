@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar Mensagem - Sistema WhatsApp{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Editar Mensagem</h1>
+    <p class="page-subtitle">Modifique o template de mensagem</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-edit"></i>
+                    Editar Mensagem #{{ mensagem.id }}
+                </h2>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.texto_mensagem.id_for_label }}" class="form-label">Texto da Mensagem</label>
+                        {{ form.texto_mensagem }}
+                        <div class="form-text">Digite o texto que será enviado para os contatos</div>
+                        {% if form.texto_mensagem.errors %}
+                            <div class="text-danger">{{ form.texto_mensagem.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.quantidade_maxima.id_for_label }}" class="form-label">Quantidade Máxima de Envios</label>
+                            {{ form.quantidade_maxima }}
+                            <div class="form-text">Limite de envios para esta mensagem</div>
+                            {% if form.quantidade_maxima.errors %}
+                                <div class="text-danger">{{ form.quantidade_maxima.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check mt-4">
+                                {{ form.ativa }}
+                                <label class="form-check-label" for="{{ form.ativa.id_for_label }}">
+                                    Mensagem ativa
+                                </label>
+                                <div class="form-text">Mensagens inativas não podem ser enviadas</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <strong>Estatísticas:</strong><br>
+                        Envios realizados: {{ mensagem.quantidade_envios }}<br>
+                        Criada em: {{ mensagem.data_criacao|date:"d/m/Y H:i" }}<br>
+                        Última atualização: {{ mensagem.data_atualizacao|date:"d/m/Y H:i" }}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'mensagens' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Voltar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

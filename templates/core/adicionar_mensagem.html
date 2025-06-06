@@ -1,0 +1,447 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Adicionar Mensagem - Sistema WhatsApp{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-comment-alt"></i>
+        Nova Mensagem
+    </h1>
+    <p class="page-subtitle">Crie um novo template de mensagem para envio em massa</p>
+</div>
+
+<div class="container-form">
+    <div class="form-card">
+        <div class="form-card-header">
+            <div class="form-card-icon">
+                <i class="fas fa-comment-alt"></i>
+            </div>
+            <div class="form-card-title">
+                <h2>Criar Mensagem</h2>
+                <p>Configure seu template de mensagem</p>
+            </div>
+        </div>
+        
+        <div class="form-card-body">
+            <form method="post" id="mensagemForm">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="{{ form.texto_mensagem.id_for_label }}" class="form-label">
+                        <i class="fas fa-edit"></i>
+                        Texto da Mensagem
+                    </label>
+                    {{ form.texto_mensagem }}
+                    <div class="form-help">
+                        <i class="fas fa-info-circle"></i>
+                        Digite o texto que será enviado para os contatos. Use variáveis como {nome} se necessário.
+                    </div>
+                    <div class="character-count">
+                        <span id="charCount">0</span> caracteres
+                    </div>
+                    {% if form.texto_mensagem.errors %}
+                        <div class="form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.texto_mensagem.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.quantidade_maxima.id_for_label }}" class="form-label">
+                            <i class="fas fa-hashtag"></i>
+                            Limite de Envios
+                        </label>
+                        {{ form.quantidade_maxima }}
+                        <div class="form-help">Número máximo de envios permitidos</div>
+                        {% if form.quantidade_maxima.errors %}
+                            <div class="form-error">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.quantidade_maxima.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-toggle-on"></i>
+                            Status da Mensagem
+                        </label>
+                        <div class="form-switch-container">
+                            <div class="form-check form-switch">
+                                {{ form.ativa }}
+                                <label class="form-check-label" for="{{ form.ativa.id_for_label }}">
+                                    <span class="switch-text">Mensagem ativa</span>
+                                </label>
+                            </div>
+                            <div class="form-help">
+                                <i class="fas fa-info-circle"></i>
+                                Mensagens inativas não podem ser enviadas
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <a href="{% url 'mensagens' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Voltar</span>
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        <span>Salvar Mensagem</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.querySelector('textarea[name="texto_mensagem"]');
+    const charCount = document.getElementById('charCount');
+    
+    function updateCharCount() {
+        const count = textarea.value.length;
+        charCount.textContent = count;
+        
+        // Muda a cor baseado no tamanho
+        if (count > 1000) {
+            charCount.style.color = '#ef4444';
+        } else if (count > 800) {
+            charCount.style.color = '#f59e0b';
+        } else {
+            charCount.style.color = 'var(--dark-600)';
+        }
+    }
+    
+    if (textarea && charCount) {
+        textarea.addEventListener('input', updateCharCount);
+        updateCharCount(); // Conta inicial
+    }
+});
+</script>
+
+<style>
+.container-form {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.form-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.form-card-header {
+    background: linear-gradient(135deg, var(--primary), #00b04f);
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    color: white;
+}
+
+.form-card-icon {
+    width: 4rem;
+    height: 4rem;
+    background: rgba(255,255,255,0.2);
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.form-card-icon i {
+    font-size: 2rem;
+}
+
+.form-card-title h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.form-card-title p {
+    margin: 0.25rem 0 0 0;
+    opacity: 0.9;
+    font-size: 0.875rem;
+}
+
+.form-card-body {
+    padding: 2rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group:last-of-type {
+    margin-bottom: 2rem;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--foreground);
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.form-label i {
+    color: var(--primary);
+    width: 1rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    background: rgba(51, 65, 85, 0.1);
+    border: 2px solid rgba(51, 65, 85, 0.2);
+    border-radius: 0.75rem;
+    color: var(--foreground);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.form-control:focus {
+    outline: none;
+    background: rgba(51, 65, 85, 0.15);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.25rem rgba(var(--primary-rgb), 0.25);
+}
+
+.form-control::placeholder {
+    color: var(--dark-600);
+}
+
+textarea.form-control {
+    min-height: 120px;
+    max-height: 300px;
+}
+
+.form-help {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--dark-600);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.form-help i {
+    color: var(--primary);
+}
+
+.character-count {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--dark-600);
+    text-align: right;
+    font-weight: 500;
+}
+
+.form-error {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 0.5rem;
+    color: #ef4444;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-switch-container {
+    background: rgba(51, 65, 85, 0.1);
+    border: 1px solid rgba(51, 65, 85, 0.2);
+    border-radius: 0.75rem;
+    padding: 1rem;
+}
+
+.form-check {
+    margin-bottom: 0.5rem;
+}
+
+.form-check-input {
+    width: 3rem;
+    height: 1.5rem;
+    background-color: rgba(51, 65, 85, 0.3);
+    border: none;
+    border-radius: 1rem;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.form-check-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.25rem rgba(var(--primary-rgb), 0.25);
+}
+
+.form-check-label {
+    margin-left: 0.5rem;
+}
+
+.switch-text {
+    font-weight: 600;
+    color: var(--foreground);
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(51, 65, 85, 0.2);
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.btn-secondary {
+    background: rgba(51, 65, 85, 0.2);
+    color: var(--dark-600);
+    border: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+.btn-secondary:hover {
+    background: rgba(51, 65, 85, 0.3);
+    color: var(--foreground);
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary), #00b04f);
+    color: white;
+    box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.4);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .container-form {
+        padding: 0 0.5rem;
+    }
+    
+    .form-card {
+        border-radius: 1rem;
+        margin: 0 0.5rem;
+    }
+    
+    .form-card-header {
+        padding: 1.5rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .form-card-icon {
+        width: 3rem;
+        height: 3rem;
+    }
+    
+    .form-card-icon i {
+        font-size: 1.5rem;
+    }
+    
+    .form-card-title h2 {
+        font-size: 1.25rem;
+    }
+    
+    .form-card-body {
+        padding: 1.5rem;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .form-control {
+        padding: 0.875rem 1rem;
+    }
+    
+    .form-actions {
+        flex-direction: column-reverse;
+        gap: 0.75rem;
+    }
+    
+    .btn {
+        justify-content: center;
+        padding: 0.875rem 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+    }
+    
+    .page-subtitle {
+        font-size: 0.875rem;
+    }
+    
+    .form-card-header {
+        padding: 1rem;
+    }
+    
+    .form-card-body {
+        padding: 1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    
+    .form-switch-container {
+        padding: 0.75rem;
+    }
+}
+</style>
+{% endblock %}

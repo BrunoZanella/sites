@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notificações - Sistema WhatsApp{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Notificações</h1>
+    <p class="page-subtitle">Alertas de vencimentos e inadimplência</p>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="card-title mb-0">
+            <i class="fas fa-bell"></i>
+            Central de Notificações
+        </h2>
+        <div>
+            <a href="{% url 'minha_empresa' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                <span class="btn-text">Voltar</span>
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if notificacoes %}
+            <div class="notification-list">
+                {% for notificacao in notificacoes %}
+                    <div class="notification-item {% if not notificacao.lida %}unread{% endif %}">
+                        <div class="notification-icon">
+                            {% if notificacao.tipo == 'vencimento' %}
+                                <i class="fas fa-calendar-times text-warning"></i>
+                            {% elif notificacao.tipo == 'pagamento' %}
+                                <i class="fas fa-money-bill-wave text-success"></i>
+                            {% elif notificacao.tipo == 'alerta' %}
+                                <i class="fas fa-exclamation-triangle text-danger"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle text-info"></i>
+                            {% endif %}
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-header">
+                                <h5 class="notification-title">{{ notificacao.titulo }}</h5>
+                                <span class="notification-date">{{ notificacao.data_criacao|date:"d/m/Y H:i" }}</span>
+                            </div>
+                            <div class="notification-body">
+                                <p>{{ notificacao.mensagem }}</p>
+                            </div>
+                            {% if notificacao.link %}
+                                <div class="notification-actions">
+                                    <a href="{{ notificacao.link }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-external-link-alt"></i> Ver detalhes
+                                    </a>
+                                    {% if not notificacao.lida %}
+                                        <form method="post" action="{% url 'marcar_notificacao_lida' notificacao.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-check"></i> Marcar como lida
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-bell-slash"></i>
+                </div>
+                <h3>Nenhuma notificação</h3>
+                <p>Você não possui notificações no momento.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Filtros de Notificações -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-filter"></i>
+            Filtros
+        </h2>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="tipo" class="form-label">Tipo</label>
+                <select name="tipo" id="tipo" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="vencimento">Vencimentos</option>
+                    <option value="pagamento">Pagamentos</option>
+                    <option value="alerta">Alertas</option>
+                    <option value="info">Informações</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" id="status" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="lida">Lidas</option>
+                    <option value="nao_lida">Não lidas</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="data_inicio" class="form-label">Data Início</label>
+                <input type="date" name="data_inicio" id="data_inicio" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label for="data_fim" class="form-label">Data Fim</label>
+                <input type="date" name="data_fim" id="data_fim" class="form-control">
+            </div>
+            <div class="col-12 mt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Filtrar
+                </button>
+                <a href="{% url 'notificacoes' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-redo"></i> Limpar Filtros
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.notification-item {
+    display: flex;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background-color: #f8f9fa;
+    border-left: 4px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+
+.notification-item.unread {
+    background-color: #e9f5ff;
+    border-left-color: #0d6efd;
+}
+
+.notification-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    font-size: 1.5rem;
+}
+
+.notification-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.notification-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.notification-date {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.notification-body {
+    margin-bottom: 0.5rem;
+}
+
+.notification-body p {
+    margin: 0;
+}
+
+.notification-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    color: #adb5bd;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .notification-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .notification-date {
+        margin-top: 0.25rem;
+    }
+    
+    .notification-actions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .notification-actions .btn {
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}

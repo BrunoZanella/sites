@@ -1,0 +1,1917 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financeiro - Apex</title>
+    <meta name="description" content="Dashboard financeiro do sistema Apex">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* Dashboard Styles */
+        :root {
+            --primary: #009739;
+            --primary-dark: #007a2e;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --info: #3B82F6;
+            --secondary: #6B7280;
+            --dark: #1f2937;
+            --darker: #111827;
+            --light: #f8f9fa;
+            --muted: #6c757d;
+            --border: #374151;
+            --card-bg: #374151;
+            --text-primary: #f8f9fa;
+            --text-secondary: #d1d5db;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .dashboard-title h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .dashboard-title p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .dashboard-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filters-container {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .dropdown {
+            position: relative;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            gap: 0.5rem;
+        }
+
+        .btn-outline {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .dropdown-toggle {
+            min-width: 150px;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 1000;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: background 0.2s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .custom-period-container {
+            display: none;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .custom-period-container.show {
+            display: block;
+        }
+
+        .d-flex {
+            display: flex;
+        }
+
+        .align-items-center {
+            align-items: center;
+        }
+
+        .gap-3 {
+            gap: 0.75rem;
+        }
+
+        .form-control {
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 151, 57, 0.1);
+        }
+
+        /* Finance Cards */
+        .finance-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+
+        .finance-card {
+            background: linear-gradient(135deg, var(--card-bg) 0%, rgba(55, 65, 81, 0.8) 100%);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .finance-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary);
+        }
+
+        .finance-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+        }
+
+        .finance-card.revenue::before {
+            background: linear-gradient(90deg, var(--success), #34d399);
+        }
+
+        .finance-card.expenses::before {
+            background: linear-gradient(90deg, var(--danger), #f87171);
+        }
+
+        .finance-card.profit::before {
+            background: linear-gradient(90deg, var(--info), #60a5fa);
+        }
+
+        .finance-card.cashflow::before {
+            background: linear-gradient(90deg, var(--warning), #fbbf24);
+        }
+
+        .finance-card-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .finance-card-info {
+            flex: 1;
+        }
+
+        .finance-card-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .finance-card-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+
+        .finance-card-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: var(--primary);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge.info {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            padding: 0 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .dashboard-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .dashboard-panel-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dashboard-panel-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-group {
+            display: flex;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .btn-group .btn {
+            border-radius: 0;
+            border: none;
+            border-right: 1px solid var(--border);
+        }
+
+        .btn-group .btn:last-child {
+            border-right: none;
+        }
+
+        .btn-group .btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .chart-container {
+            padding: 2rem;
+            height: 400px;
+            position: relative;
+        }
+
+        /* KPIs */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 2rem;
+        }
+
+        .kpi-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .kpi-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .kpi-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .kpi-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .kpi-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .kpi-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background: rgba(0, 151, 57, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        /* Charts Row */
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            padding: 0 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-legend {
+            padding: 0 2rem 2rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .legend-item:last-child {
+            border-bottom: none;
+        }
+
+        .legend-color {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .legend-label {
+            flex: 1;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .legend-percent {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table th {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .table td {
+            color: var(--text-primary);
+        }
+
+        .table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Client Cards (Mobile) */
+        .client-cards {
+            display: none;
+            padding: 2rem;
+            gap: 1rem;
+            flex-direction: column;
+        }
+
+        .client-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .client-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .client-info h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .client-info p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .client-revenue {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--success);
+            margin-bottom: 0.5rem;
+        }
+
+        .client-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .badge.status-ativo {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        /* Alerts */
+        .alerts-container {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .alert-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border-left: 4px solid;
+        }
+
+        .alert-item.alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-left-color: var(--warning);
+        }
+
+        .alert-item.alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-left-color: var(--danger);
+        }
+
+        .alert-icon {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .alert-warning .alert-icon {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .alert-danger .alert-icon {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .alert-message {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .no-alerts {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .no-alerts i {
+            font-size: 2rem;
+            color: var(--success);
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .dashboard-actions {
+                justify-content: stretch;
+                flex-direction: column;
+            }
+
+            .filters-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .finance-cards {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+
+            .dashboard-grid {
+                padding: 0 1rem;
+            }
+
+            .charts-row {
+                grid-template-columns: 1fr;
+                padding: 0 1rem;
+            }
+
+            .chart-container {
+                height: 300px;
+                padding: 1rem;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                padding: 1rem;
+            }
+
+            .table-container {
+                display: none;
+            }
+
+            .client-cards {
+                display: flex;
+            }
+
+            .d-none.d-md-table-cell {
+                display: none !important;
+            }
+
+            .d-none.d-lg-table-cell {
+                display: none !important;
+            }
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-muted {
+            color: var(--text-muted);
+        }
+
+        .text-success {
+            color: var(--success);
+        }
+
+        .fw-bold {
+            font-weight: 700;
+        }
+
+        .py-4 {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        .mb-2 {
+            margin-bottom: 0.5rem;
+        }
+
+        .fa-2x {
+            font-size: 2em;
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        small {
+            font-size: 0.875em;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="dashboard-title">
+            <h1><i class="fas fa-chart-line"></i> Dashboard Financeiro</h1>
+            <p>Visão completa da saúde financeira da empresa</p>
+        </div>
+        
+        <div class="dashboard-actions">
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label class="filter-label">Período:</label>
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-outline dropdown-toggle" id="periodo-btn" onclick="toggleDropdown('periodo-dropdown')">
+                            <i class="fas fa-calendar-alt"></i> <span id="periodo-texto">Este Mês</span>
+                            <i class="fas fa-chevron-down" style="margin-left: 0.5rem;"></i>
+                        </button>
+                        <div class="dropdown-menu" id="periodo-dropdown">
+                            <a class="dropdown-item active" href="#" data-periodo="mes_atual">Este Mês</a>
+                            <a class="dropdown-item" href="#" data-periodo="mes_anterior">Mês Anterior</a>
+                            <a class="dropdown-item" href="#" data-periodo="trimestre_atual">Este Trimestre</a>
+                            <a class="dropdown-item" href="#" data-periodo="trimestre_anterior">Trimestre Anterior</a>
+                            <a class="dropdown-item" href="#" data-periodo="semestre_atual">Este Semestre</a>
+                            <a class="dropdown-item" href="#" data-periodo="ano_atual">Este Ano</a>
+                            <a class="dropdown-item" href="#" data-periodo="ano_anterior">Ano Anterior</a>
+                            <a class="dropdown-item" href="#" data-periodo="personalizado">Período Personalizado</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">Comparar com:</label>
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-outline dropdown-toggle" id="comparacao-btn" onclick="toggleDropdown('comparacao-dropdown')">
+                            <i class="fas fa-balance-scale"></i> <span id="comparacao-texto">Período Anterior</span>
+                            <i class="fas fa-chevron-down" style="margin-left: 0.5rem;"></i>
+                        </button>
+                        <div class="dropdown-menu" id="comparacao-dropdown">
+                            <a class="dropdown-item active" href="#" data-comparacao="anterior">Período Anterior</a>
+                            <a class="dropdown-item" href="#" data-comparacao="ano_anterior">Mesmo Período Ano Anterior</a>
+                            <a class="dropdown-item" href="#" data-comparacao="media_historica">Média Histórica</a>
+                            <a class="dropdown-item" href="#" data-comparacao="nenhuma">Sem Comparação</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="custom-period-container" id="custom-period-container">
+                <div class="d-flex align-items-center gap-3">
+                    <input type="date" class="form-control" id="data-inicio">
+                    <span>até</span>
+                    <input type="date" class="form-control" id="data-fim">
+                    <button class="btn btn-primary" id="aplicar-periodo">Aplicar</button>
+                </div>
+            </div>
+            
+            <button class="btn btn-success" id="btn-atualizar">
+                <i class="fas fa-sync-alt"></i> Atualizar
+            </button>
+        </div>
+    </div>
+
+    <!-- Finance Cards -->
+    <div class="finance-cards" id="finance-cards">
+        <div class="finance-card revenue">
+            <div class="finance-card-content">
+                <div class="finance-card-info">
+                    <h3 class="finance-card-title">Receita Total</h3>
+                    <div class="finance-card-value" id="receita-total">R$ {{ receita_total|floatformat:2|default:"0,00" }}</div>
+                    <span class="badge info" id="receita-badge">
+                        {% if receita_comparacao %}
+                            {% if receita_total > receita_comparacao %}
+                            <i class="fas fa-arrow-up"></i> +{{ receita_percentual|floatformat:1|default:"0,0" }}%
+                            {% elif receita_total < receita_comparacao %}
+                            <i class="fas fa-arrow-down"></i> {{ receita_percentual|floatformat:1|default:"0,0" }}%
+                            {% else %}
+                            <i class="fas fa-equals"></i> 0,0%
+                            {% endif %}
+                        {% else %}
+                        Período atual
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="finance-card-icon">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="finance-card expenses">
+            <div class="finance-card-content">
+                <div class="finance-card-info">
+                    <h3 class="finance-card-title">Despesas Totais</h3>
+                    <div class="finance-card-value" id="despesas-total">R$ {{ despesas_total|floatformat:2|default:"0,00" }}</div>
+                    <span class="badge info" id="despesas-badge">
+                        {% if despesas_comparacao %}
+                            {% if despesas_total > despesas_comparacao %}
+                            <i class="fas fa-arrow-up"></i> +{{ despesas_percentual|floatformat:1|default:"0,0" }}%
+                            {% elif despesas_total < despesas_comparacao %}
+                            <i class="fas fa-arrow-down"></i> {{ despesas_percentual|floatformat:1|default:"0,0" }}%
+                            {% else %}
+                            <i class="fas fa-equals"></i> 0,0%
+                            {% endif %}
+                        {% else %}
+                        Período atual
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="finance-card-icon">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="finance-card profit">
+            <div class="finance-card-content">
+                <div class="finance-card-info">
+                    <h3 class="finance-card-title">Lucro Líquido</h3>
+                    <div class="finance-card-value" id="lucro-liquido">R$ {{ lucro_liquido|floatformat:2|default:"0,00" }}</div>
+                    <span class="badge info" id="margem-badge">
+                        Margem: {{ margem_lucro|floatformat:1|default:"0,0" }}%
+                    </span>
+                </div>
+                <div class="finance-card-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="finance-card cashflow">
+            <div class="finance-card-content">
+                <div class="finance-card-info">
+                    <h3 class="finance-card-title">Fluxo de Caixa</h3>
+                    <div class="finance-card-value" id="fluxo-caixa">R$ {{ fluxo_caixa|floatformat:2|default:"0,00" }}</div>
+                    <span class="badge info">
+                        Projeção 30 dias
+                    </span>
+                </div>
+                <div class="finance-card-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Evolution Chart -->
+    <div class="dashboard-grid">
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <h2 class="dashboard-panel-title">
+                    <i class="fas fa-chart-area"></i> Evolução Financeira
+                </h2>
+                <div class="dashboard-panel-actions">
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline active" data-chart-view="monthly">Mensal</button>
+                        <button type="button" class="btn btn-outline" data-chart-view="quarterly">Trimestral</button>
+                        <button type="button" class="btn btn-outline" data-chart-view="yearly">Anual</button>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="financialEvolutionChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="dashboard-grid">
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <h2 class="dashboard-panel-title">
+                    <i class="fas fa-tachometer-alt"></i> Indicadores Principais
+                </h2>
+            </div>
+            <div class="kpi-grid" id="kpi-grid">
+                <div class="kpi-item">
+                    <div class="kpi-info">
+                        <span class="kpi-label">Projetos Ativos</span>
+                        <span class="kpi-value">{{ projetos_ativos|default:"0" }}</span>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                </div>
+                
+                <div class="kpi-item">
+                    <div class="kpi-info">
+                        <span class="kpi-label">Clientes Ativos</span>
+                        <span class="kpi-value">{{ clientes_ativos|default:"0" }}</span>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                
+                <div class="kpi-item">
+                    <div class="kpi-info">
+                        <span class="kpi-label">Ticket Médio</span>
+                        <span class="kpi-value">R$ {{ ticket_medio|floatformat:2|default:"0,00" }}</span>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="fas fa-tag"></i>
+                    </div>
+                </div>
+                
+                <div class="kpi-item">
+                    <div class="kpi-info">
+                        <span class="kpi-label">Taxa Inadimplência</span>
+                        <span class="kpi-value">{{ taxa_inadimplencia|floatformat:1|default:"0,0" }}%</span>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                </div>
+                
+                <div class="kpi-item">
+                    <div class="kpi-info">
+                        <span class="kpi-label">Serviços Ativos</span>
+                        <span class="kpi-value">{{ servicos_ativos|default:"0" }}</span>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="fas fa-server"></i>
+                    </div>
+                </div>
+                
+                <div class="kpi-item">
+                    <div class="kpi-info">
+                        <span class="kpi-label">ROI Médio</span>
+                        <span class="kpi-value">{{ roi_medio|floatformat:1|default:"0,0" }}%</span>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="charts-row">
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <h2 class="dashboard-panel-title">
+                    <i class="fas fa-chart-pie"></i> Receitas por Categoria
+                </h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+            <div class="chart-legend" id="revenue-legend">
+                {% for categoria in categorias_receita %}
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: {{ categoria.cor }}"></span>
+                    <span class="legend-label">{{ categoria.nome }}</span>
+                    <span class="legend-value">R$ {{ categoria.valor|floatformat:2 }}</span>
+                    <span class="legend-percent">{{ categoria.percentual|floatformat:1 }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <h2 class="dashboard-panel-title">
+                    <i class="fas fa-chart-pie"></i> Despesas por Categoria
+                </h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="expensesChart"></canvas>
+            </div>
+            <div class="chart-legend" id="expenses-legend">
+                {% for categoria in categorias_despesa %}
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: {{ categoria.cor }}"></span>
+                    <span class="legend-label">{{ categoria.nome }}</span>
+                    <span class="legend-value">R$ {{ categoria.valor|floatformat:2 }}</span>
+                    <span class="legend-percent">{{ categoria.percentual|floatformat:1 }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="charts-row">
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <h2 class="dashboard-panel-title">
+                    <i class="fas fa-chart-line"></i> Tendência Receitas vs Despesas
+                </h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="revenueTrendChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <h2 class="dashboard-panel-title">
+                    <i class="fas fa-bullseye"></i> Performance KPIs
+                </h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="kpiPerformanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 3 -->
+    <div class="charts-row">
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <h2 class="dashboard-panel-title">
+                    <i class="fas fa-percentage"></i> ROI por Tipo de Projeto
+                </h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="roiChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <h2 class="dashboard-panel-title">
+                    <i class="fas fa-chart-bar"></i> Comparativo de Períodos
+                </h2>
+                <small class="text-muted">{{ periodo_atual_label|default:"Período Atual" }} vs {{ periodo_comparacao_label|default:"Período Anterior" }}</small>
+            </div>
+            <div class="chart-container">
+                <canvas id="periodComparisonChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clients Table -->
+    <div class="charts-row">
+        <div class="dashboard-panel" style="grid-column: 1 / -1;" id="clients-panel">
+            <div class="dashboard-panel-header">
+                <h2 class="dashboard-panel-title">
+                    <i class="fas fa-users"></i> Principais Clientes
+                </h2>
+                <a href="#" class="btn btn-sm btn-outline">
+                    Ver Todos <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            
+            <!-- Desktop Table -->
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th class="d-none d-md-table-cell">Projetos</th>
+                            <th>Receita Total</th>
+                            <th class="d-none d-lg-table-cell">Última Atividade</th>
+                            <th class="d-none d-md-table-cell">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientes-table-body">
+                        {% for cliente in top_clientes %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div style="width: 2rem; height: 2rem; border-radius: 50%; background: rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-user" style="color: var(--text-muted);"></i>
+                                    </div>
+                                    <span class="fw-bold">{{ cliente.nome }}</span>
+                                </div>
+                            </td>
+                            <td class="d-none d-md-table-cell">{{ cliente.total_projetos|default:"0" }}</td>
+                            <td class="text-success fw-bold">R$ {{ cliente.receita_total|floatformat:2|default:"0,00" }}</td>
+                            <td class="d-none d-lg-table-cell">{{ cliente.ultima_atividade|date:"d/m/Y"|default:"-" }}</td>
+                            <td class="d-none d-md-table-cell">
+                                <span class="badge status-{{ cliente.status|default:"ativo" }}">
+                                    {{ cliente.get_status_display|default:"Ativo" }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                <i class="fas fa-users fa-2x mb-2"></i>
+                                <p>Nenhum cliente encontrado no período</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile Cards -->
+            <div class="client-cards" id="clientes-mobile-cards">
+                {% for cliente in top_clientes %}
+                <div class="client-card">
+                    <div class="client-card-header">
+                        <div class="client-info">
+                            <h4>{{ cliente.nome }}</h4>
+                            <p>{{ cliente.total_projetos|default:"0" }} projetos</p>
+                        </div>
+                        <span class="badge status-{{ cliente.status|default:"ativo" }}">{{ cliente.get_status_display|default:"Ativo" }}</span>
+                    </div>
+                    <div class="client-revenue">R$ {{ cliente.receita_total|floatformat:2|default:"0,00" }}</div>
+                    <div class="client-meta">
+                        <span>Última atividade: {{ cliente.ultima_atividade|date:"d/m/Y"|default:"-" }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="client-card">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-users fa-2x mb-2"></i>
+                        <p>Nenhum cliente encontrado no período</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Fluxo de Caixa e Alertas -->
+    <div class="charts-row">
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <h2 class="dashboard-panel-title">
+                    <i class="fas fa-money-bill-wave"></i> Fluxo de Caixa Projetado
+                </h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="cashflowChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <h2 class="dashboard-panel-title">
+                    <i class="fas fa-bell"></i> Alertas Financeiros
+                </h2>
+            </div>
+            <div class="alerts-container" id="alerts-container">
+                {% if alertas %}
+                    {% for alerta in alertas %}
+                    <div class="alert-item alert-{{ alerta.tipo|default:"warning" }}">
+                        <div class="alert-icon">
+                            <i class="fas fa-{{ alerta.icone|default:"exclamation-triangle" }}"></i>
+                        </div>
+                        <div class="alert-content">
+                            <div class="alert-title">{{ alerta.titulo }}</div>
+                            <div class="alert-message">{{ alerta.mensagem }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="no-alerts">
+                    <i class="fas fa-check-circle"></i>
+                    <p>Nenhum alerta financeiro no momento</p>
+                    <small>Situação financeira estável</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estado global da aplicação
+        let currentState = {
+            periodo: 'mes_atual',
+            comparacao: 'anterior',
+            chartView: 'monthly',
+            customPeriod: {
+                inicio: null,
+                fim: null
+            }
+        };
+
+        // Chart.js Configuration
+        Chart.defaults.color = '#f8f9fa';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+        Chart.defaults.font.family = "'Inter', 'Segoe UI', 'Roboto', sans-serif";
+
+        // Variáveis dos gráficos (fornecidas pelo Django)
+        let chartsData = {
+            meses_labels: {{ meses_labels|safe|default:'[]' }},
+            receitas_mensais: {{ receitas_mensais|safe|default:'[]' }},
+            despesas_mensais: {{ despesas_mensais|safe|default:'[]' }},
+            lucros_mensais: {{ lucros_mensais|safe|default:'[]' }},
+            trimestres_labels: {{ trimestres_labels|safe|default:'[]' }},
+            receitas_trimestrais: {{ receitas_trimestrais|safe|default:'[]' }},
+            despesas_trimestrais: {{ despesas_trimestrais|safe|default:'[]' }},
+            lucros_trimestrais: {{ lucros_trimestrais|safe|default:'[]' }},
+            anos_labels: {{ anos_labels|safe|default:'[]' }},
+            receitas_anuais: {{ receitas_anuais|safe|default:'[]' }},
+            despesas_anuais: {{ despesas_anuais|safe|default:'[]' }},
+            lucros_anuais: {{ lucros_anuais|safe|default:'[]' }},
+            categorias_receita_labels: {{ categorias_receita_labels|safe|default:'[]' }},
+            categorias_receita_valores: {{ categorias_receita_valores|safe|default:'[]' }},
+            categorias_receita_cores: {{ categorias_receita_cores|safe|default:'[]' }},
+            categorias_despesa_labels: {{ categorias_despesa_labels|safe|default:'[]' }},
+            categorias_despesa_valores: {{ categorias_despesa_valores|safe|default:'[]' }},
+            categorias_despesa_cores: {{ categorias_despesa_cores|safe|default:'[]' }},
+            fluxo_caixa_labels: {{ fluxo_caixa_labels|safe|default:'[]' }},
+            fluxo_caixa_entradas: {{ fluxo_caixa_entradas|safe|default:'[]' }},
+            fluxo_caixa_saidas: {{ fluxo_caixa_saidas|safe|default:'[]' }}
+        };
+
+        const colors = {
+            primary: '#009739',
+            success: '#10B981',
+            danger: '#EF4444',
+            warning: '#F59E0B',
+            info: '#3B82F6',
+            secondary: '#6B7280'
+        };
+
+        // Variáveis para os gráficos
+        let financialEvolutionChart;
+        let revenueChart;
+        let expensesChart;
+        let periodComparisonChart;
+        let cashflowChart;
+
+        // Dropdown Functions
+        function toggleDropdown(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            dropdown.classList.toggle('show');
+            
+            // Close other dropdowns
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                if (menu.id !== dropdownId) {
+                    menu.classList.remove('show');
+                }
+            });
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+        });
+
+        // Aplicar filtros
+        function applyFilters() {
+            console.log('Aplicando filtros:', currentState);
+            
+            // Construir URL com parâmetros
+            const url = new URL(window.location.href);
+            url.searchParams.set('periodo', currentState.periodo);
+            url.searchParams.set('comparacao', currentState.comparacao);
+            
+            if (currentState.periodo === 'personalizado' && currentState.customPeriod.inicio && currentState.customPeriod.fim) {
+                url.searchParams.set('data_inicio', currentState.customPeriod.inicio);
+                url.searchParams.set('data_fim', currentState.customPeriod.fim);
+            }
+            
+            // Recarregar página com novos parâmetros
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    window.location.href = url.toString();
+                    resolve();
+                }, 500);
+            });
+        }
+
+        // Funções para obter dados baseados na visualização
+        function getChartData(view) {
+            switch(view) {
+                case 'quarterly':
+                    return {
+                        labels: chartsData.trimestres_labels,
+                        receitas: chartsData.receitas_trimestrais,
+                        despesas: chartsData.despesas_trimestrais,
+                        lucros: chartsData.lucros_trimestrais
+                    };
+                case 'yearly':
+                    return {
+                        labels: chartsData.anos_labels,
+                        receitas: chartsData.receitas_anuais,
+                        despesas: chartsData.despesas_anuais,
+                        lucros: chartsData.lucros_anuais
+                    };
+                default: // monthly
+                    return {
+                        labels: chartsData.meses_labels,
+                        receitas: chartsData.receitas_mensais,
+                        despesas: chartsData.despesas_mensais,
+                        lucros: chartsData.lucros_mensais
+                    };
+            }
+        }
+
+        // Opções dos gráficos
+        function getLineChartOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        align: 'end',
+                        labels: {
+                            boxWidth: 12,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleColor: '#f8f9fa',
+                        bodyColor: '#f8f9fa',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                const value = Math.abs(context.parsed.y);
+                                return context.dataset.label + ': R$ ' + value.toLocaleString('pt-BR', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                const absValue = Math.abs(value);
+                                const sign = value < 0 ? '-' : '';
+                                return sign + 'R$ ' + absValue.toLocaleString('pt-BR', {
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 0
+                                });
+                            }
+                        }
+                    }
+                }
+            };
+        }
+
+        function getDoughnutOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleColor: '#f8f9fa',
+                        bodyColor: '#f8f9fa',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed.toLocaleString('pt-BR', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.parsed * 100) / total).toFixed(1);
+                                return context.label + ': R$ ' + value + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            };
+        }
+
+        function getBarChartOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        align: 'end',
+                        labels: {
+                            boxWidth: 12,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleColor: '#f8f9fa',
+                        bodyColor: '#f8f9fa',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': R$ ' + context.parsed.y.toLocaleString('pt-BR', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value.toLocaleString('pt-BR', {
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 0
+                                });
+                            }
+                        }
+                    }
+                }
+            };
+        }
+
+        // Inicializar gráficos
+        function initCharts() {
+            const chartData = getChartData(currentState.chartView);
+
+            // Financial Evolution Chart - Despesas como valores negativos
+            const financialCtx = document.getElementById('financialEvolutionChart');
+            if (financialCtx && chartsData.meses_labels.length > 0) {
+                financialEvolutionChart = new Chart(financialCtx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [
+                            {
+                                label: 'Receitas',
+                                data: chartData.receitas,
+                                borderColor: colors.success,
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            },
+                            {
+                                label: 'Despesas',
+                                data: chartData.despesas.map(value => -Math.abs(value)), // Valores negativos
+                                borderColor: colors.danger,
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            },
+                            {
+                                label: 'Lucro',
+                                data: chartData.lucros,
+                                borderColor: colors.info,
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                tension: 0.4,
+                                borderDash: [5, 5],
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: getLineChartOptions()
+                });
+            }
+
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart');
+            if (revenueCtx && chartsData.categorias_receita_valores.length > 0) {
+                revenueChart = new Chart(revenueCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: chartsData.categorias_receita_labels,
+                        datasets: [{
+                            data: chartsData.categorias_receita_valores,
+                            backgroundColor: chartsData.categorias_receita_cores,
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: getDoughnutOptions()
+                });
+            }
+
+            // Expenses Chart
+            const expensesCtx = document.getElementById('expensesChart');
+            if (expensesCtx && chartsData.categorias_despesa_valores.length > 0) {
+                expensesChart = new Chart(expensesCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: chartsData.categorias_despesa_labels,
+                        datasets: [{
+                            data: chartsData.categorias_despesa_valores,
+                            backgroundColor: chartsData.categorias_despesa_cores,
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: getDoughnutOptions()
+                });
+            }
+
+            // Period Comparison Chart
+            const periodCtx = document.getElementById('periodComparisonChart');
+            if (periodCtx) {
+                periodComparisonChart = new Chart(periodCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Receitas', 'Despesas', 'Lucro'],
+                        datasets: [
+                            {
+                                label: '{{ periodo_atual_label|default:"Período Atual" }}',
+                                data: [
+                                    {{ receita_total|default:"0" }},
+                                    {{ despesas_total|default:"0" }},
+                                    {{ lucro_liquido|default:"0" }}
+                                ],
+                                backgroundColor: 'rgba(0, 151, 57, 0.2)',
+                                borderColor: colors.primary,
+                                borderWidth: 1
+                            },
+                            {
+                                label: '{{ periodo_comparacao_label|default:"Período Anterior" }}',
+                                data: [
+                                    {{ receita_comparacao|default:"0" }},
+                                    {{ despesas_comparacao|default:"0" }},
+                                    {{ lucro_comparacao|default:"0" }}
+                                ],
+                                backgroundColor: 'rgba(107, 114, 128, 0.2)',
+                                borderColor: colors.secondary,
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: getBarChartOptions()
+                });
+            }
+
+            // Cashflow Chart
+            const cashflowCtx = document.getElementById('cashflowChart');
+            if (cashflowCtx && chartsData.fluxo_caixa_labels.length > 0) {
+                cashflowChart = new Chart(cashflowCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartsData.fluxo_caixa_labels,
+                        datasets: [
+                            {
+                                label: 'Entradas',
+                                data: chartsData.fluxo_caixa_entradas,
+                                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                                borderColor: colors.success,
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Saídas',
+                                data: chartsData.fluxo_caixa_saidas,
+                                backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                                borderColor: colors.danger,
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: getBarChartOptions()
+                });
+            }
+
+            // KPI Performance Chart
+            const kpiCtx = document.getElementById('kpiPerformanceChart');
+            if (kpiCtx) {
+                new Chart(kpiCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Projetos Ativos', 'Clientes Ativos', 'Ticket Médio', 'ROI', 'Serviços Ativos'],
+                        datasets: [{
+                            label: 'Performance',
+                            data: [
+                                Math.min({{ projetos_ativos|default:"0" }} / 10 * 100, 100),
+                                Math.min({{ clientes_ativos|default:"0" }} / 50 * 100, 100),
+                                Math.min({{ ticket_medio|default:"0" }} / 10000 * 100, 100),
+                                Math.min({{ roi_medio|default:"0" }}, 100),
+                                Math.min({{ servicos_ativos|default:"0" }} / 20 * 100, 100)
+                            ],
+                            backgroundColor: 'rgba(0, 151, 57, 0.2)',
+                            borderColor: colors.primary,
+                            borderWidth: 2,
+                            pointBackgroundColor: colors.primary
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    display: false
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                angleLines: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Revenue vs Expenses Trend Chart
+            const trendCtx = document.getElementById('revenueTrendChart');
+            if (trendCtx && chartsData.meses_labels.length > 0) {
+                new Chart(trendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: chartsData.meses_labels,
+                        datasets: [
+                            {
+                                label: 'Receitas',
+                                data: chartsData.receitas_mensais,
+                                borderColor: colors.success,
+                                backgroundColor: 'transparent',
+                                tension: 0.4,
+                                borderWidth: 3,
+                                pointRadius: 6,
+                                pointHoverRadius: 8
+                            },
+                            {
+                                label: 'Despesas',
+                                data: chartsData.despesas_mensais,
+                                borderColor: colors.danger,
+                                backgroundColor: 'transparent',
+                                tension: 0.4,
+                                borderWidth: 3,
+                                pointRadius: 6,
+                                pointHoverRadius: 8
+                            }
+                        ]
+                    },
+                    options: getLineChartOptions()
+                });
+            }
+
+            // ROI by Project Type Chart
+            const roiCtx = document.getElementById('roiChart');
+            if (roiCtx) {
+                new Chart(roiCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Desenvolvimento', 'Manutenção', 'Consultoria', 'Design', 'Outros'],
+                        datasets: [{
+                            label: 'ROI (%)',
+                            data: [
+                                {{ roi_medio|default:"0" }},
+                                {{ roi_medio|default:"0" }} * 0.8,
+                                {{ roi_medio|default:"0" }} * 1.2,
+                                {{ roi_medio|default:"0" }} * 0.9,
+                                {{ roi_medio|default:"0" }} * 0.7
+                            ],
+                            backgroundColor: [
+                                'rgba(0, 151, 57, 0.8)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(59, 130, 246, 0.8)',
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(107, 114, 128, 0.8)'
+                            ],
+                            borderWidth: 0,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                titleColor: '#f8f9fa',
+                                bodyColor: '#f8f9fa',
+                                borderColor: '#334155',
+                                borderWidth: 1,
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'ROI: ' + context.parsed.y.toFixed(1) + '%';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Atualizar gráfico de evolução financeira
+        function updateFinancialEvolutionChart(view) {
+            if (!financialEvolutionChart) return;
+            
+            const chartData = getChartData(view);
+            
+            financialEvolutionChart.data.labels = chartData.labels;
+            financialEvolutionChart.data.datasets[0].data = chartData.receitas;
+            financialEvolutionChart.data.datasets[1].data = chartData.despesas.map(value => -Math.abs(value)); // Valores negativos
+            financialEvolutionChart.data.datasets[2].data = chartData.lucros;
+            
+            financialEvolutionChart.update();
+        }
+
+        // Inicializar event listeners
+        function initEventListeners() {
+            // Filter handlers
+            document.querySelectorAll('[data-periodo]').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Update active state
+                    document.querySelectorAll('[data-periodo]').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const periodo = this.getAttribute('data-periodo');
+                    currentState.periodo = periodo;
+                    document.getElementById('periodo-texto').textContent = this.textContent;
+                    
+                    // Show/hide custom period
+                    const customContainer = document.getElementById('custom-period-container');
+                    if (periodo === 'personalizado') {
+                        customContainer.classList.add('show');
+                    } else {
+                        customContainer.classList.remove('show');
+                        applyFilters();
+                    }
+                    
+                    // Close dropdown
+                    document.getElementById('periodo-dropdown').classList.remove('show');
+                });
+            });
+
+            document.querySelectorAll('[data-comparacao]').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Update active state
+                    document.querySelectorAll('[data-comparacao]').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const comparacao = this.getAttribute('data-comparacao');
+                    currentState.comparacao = comparacao;
+                    document.getElementById('comparacao-texto').textContent = this.textContent;
+                    
+                    applyFilters();
+                    
+                    // Close dropdown
+                    document.getElementById('comparacao-dropdown').classList.remove('show');
+                });
+            });
+
+            // Chart view buttons
+            document.querySelectorAll('[data-chart-view]').forEach(button => {
+                button.addEventListener('click', function() {
+                    document.querySelectorAll('[data-chart-view]').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const view = this.getAttribute('data-chart-view');
+                    currentState.chartView = view;
+                    updateFinancialEvolutionChart(view);
+                });
+            });
+
+            // Apply custom period
+            document.getElementById('aplicar-periodo').addEventListener('click', function() {
+                const dataInicio = document.getElementById('data-inicio').value;
+                const dataFim = document.getElementById('data-fim').value;
+                
+                if (dataInicio && dataFim) {
+                    currentState.customPeriod.inicio = dataInicio;
+                    currentState.customPeriod.fim = dataFim;
+                    applyFilters();
+                }
+            });
+
+            // Update button
+            document.getElementById('btn-atualizar').addEventListener('click', function() {
+                const button = this;
+                const originalText = button.innerHTML;
+                
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Atualizando...';
+                
+                applyFilters().finally(() => {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                });
+            });
+        }
+
+        // Inicializar aplicação
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard Financeiro carregado');
+            
+            // Inicializar componentes
+            initEventListeners();
+            
+            // Inicializar gráficos
+            if (typeof Chart !== 'undefined') {
+                initCharts();
+            } else {
+                console.error('Chart.js não foi carregado');
+            }
+        });
+    </script>
+</body>
+</html>

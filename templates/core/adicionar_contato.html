@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Adicionar Contato - Sistema WhatsApp{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-user-plus"></i>
+        Adicionar Contato
+    </h1>
+    <p class="page-subtitle">Adicione um novo contato manualmente ao seu sistema</p>
+</div>
+
+<div class="container-form">
+    <div class="form-card">
+        <div class="form-card-header">
+            <div class="form-card-icon">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="form-card-title">
+                <h2>Novo Contato</h2>
+                <p>Preencha as informações do contato</p>
+            </div>
+        </div>
+        
+        <div class="form-card-body">
+            <form method="post" id="contatoForm">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="{{ form.nome.id_for_label }}" class="form-label">
+                        <i class="fas fa-user"></i>
+                        Nome Completo
+                    </label>
+                    {{ form.nome }}
+                    <div class="form-help">Digite o nome completo do contato</div>
+                    {% if form.nome.errors %}
+                        <div class="form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.nome.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.numero.id_for_label }}" class="form-label">
+                        <i class="fas fa-phone"></i>
+                        Número do WhatsApp
+                    </label>
+                    {{ form.numero }}
+                    <div class="form-help">
+                        <i class="fas fa-info-circle"></i>
+                        Formato: 5511999999999 (código do país + DDD + número)
+                    </div>
+                    {% if form.numero.errors %}
+                        <div class="form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.numero.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-actions">
+                    <a href="{% url 'contatos' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Voltar</span>
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        <span>Salvar Contato</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.container-form {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.form-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.form-card-header {
+    background: linear-gradient(135deg, var(--primary), #00b04f);
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    color: white;
+}
+
+.form-card-icon {
+    width: 4rem;
+    height: 4rem;
+    background: rgba(255,255,255,0.2);
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.form-card-icon i {
+    font-size: 2rem;
+}
+
+.form-card-title h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.form-card-title p {
+    margin: 0.25rem 0 0 0;
+    opacity: 0.9;
+    font-size: 0.875rem;
+}
+
+.form-card-body {
+    padding: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group:last-of-type {
+    margin-bottom: 2rem;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--foreground);
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.form-label i {
+    color: var(--primary);
+    width: 1rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    background: rgba(51, 65, 85, 0.1);
+    border: 2px solid rgba(51, 65, 85, 0.2);
+    border-radius: 0.75rem;
+    color: var(--foreground);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    background: rgba(51, 65, 85, 0.15);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.25rem rgba(var(--primary-rgb), 0.25);
+}
+
+.form-control::placeholder {
+    color: var(--dark-600);
+}
+
+.form-help {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--dark-600);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.form-help i {
+    color: var(--primary);
+}
+
+.form-error {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 0.5rem;
+    color: #ef4444;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(51, 65, 85, 0.2);
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.btn-secondary {
+    background: rgba(51, 65, 85, 0.2);
+    color: var(--dark-600);
+    border: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+.btn-secondary:hover {
+    background: rgba(51, 65, 85, 0.3);
+    color: var(--foreground);
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary), #00b04f);
+    color: white;
+    box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.4);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .container-form {
+        padding: 0 0.5rem;
+    }
+    
+    .form-card {
+        border-radius: 1rem;
+        margin: 0 0.5rem;
+    }
+    
+    .form-card-header {
+        padding: 1.5rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .form-card-icon {
+        width: 3rem;
+        height: 3rem;
+    }
+    
+    .form-card-icon i {
+        font-size: 1.5rem;
+    }
+    
+    .form-card-title h2 {
+        font-size: 1.25rem;
+    }
+    
+    .form-card-body {
+        padding: 1.5rem;
+    }
+    
+    .form-control {
+        padding: 0.875rem 1rem;
+    }
+    
+    .form-actions {
+        flex-direction: column-reverse;
+        gap: 0.75rem;
+    }
+    
+    .btn {
+        justify-content: center;
+        padding: 0.875rem 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+    }
+    
+    .page-subtitle {
+        font-size: 0.875rem;
+    }
+    
+    .form-card-header {
+        padding: 1rem;
+    }
+    
+    .form-card-body {
+        padding: 1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+}
+</style>
+{% endblock %}

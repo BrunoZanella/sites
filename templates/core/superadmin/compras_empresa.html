@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Compras da Empresa - Sistema WhatsApp{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Compras da Empresa</h1>
+    <p class="page-subtitle">Registre e gerencie as compras da empresa</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-shopping-cart"></i>
+            Lista de Compras
+        </h2>
+        <a href="{% url 'criar_compra_empresa' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            Registrar Compra
+        </a>
+    </div>
+    <div class="card-body">
+        <!-- Desktop Table - Visível apenas em desktop -->
+        {% if not request.user_agent.is_mobile %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Categoria</th>
+                        <th>Valor</th>
+                        <th>Data</th>
+                        <th>Forma de Pagamento</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for compra in compras %}
+                    <tr>
+                        <td>{{ compra.descricao }}</td>
+                        <td>
+                            <span class="badge" style="background-color: {{ compra.categoria.cor }}">
+                                {{ compra.categoria.nome }}
+                            </span>
+                        </td>
+                        <td>R$ {{ compra.valor|floatformat:2 }}</td>
+                        <td>{{ compra.data|date:"d/m/Y" }}</td>
+                        <td>{{ compra.forma_pagamento }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{% url 'editar_compra_empresa' compra.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <!-- <a href="{% url 'excluir_compra_empresa' compra.id %}" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a> -->
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhuma compra registrada</p>
+                            <a href="{% url 'criar_compra_empresa' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i>
+                                Registrar Compra
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <!-- Mobile Cards - Visível apenas em mobile -->
+        <div class="compras-mobile-grid">
+            {% for compra in compras %}
+            <div class="compra-mobile-card">
+                <div class="compra-mobile-header">
+                    <div class="compra-mobile-info">
+                        <h6 class="compra-mobile-title">{{ compra.descricao }}</h6>
+                        <span class="badge" style="background-color: {{ compra.categoria.cor }}">
+                            {{ compra.categoria.nome }}
+                        </span>
+                    </div>
+                    <div class="compra-mobile-value">
+                        R$ {{ compra.valor|floatformat:2 }}
+                    </div>
+                </div>
+                <div class="compra-mobile-details">
+                    <div class="compra-mobile-detail">
+                        <i class="fas fa-calendar"></i>
+                        <span>Data: {{ compra.data|date:"d/m/Y" }}</span>
+                    </div>
+                    <div class="compra-mobile-detail">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Pagamento: {{ compra.forma_pagamento }}</span>
+                    </div>
+                </div>
+                <div class="compra-mobile-actions">
+                    <a href="{% url 'editar_compra_empresa' compra.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <a href="{% url 'excluir_compra_empresa' compra.id %}" class="btn btn-sm btn-outline-danger">
+                        <i class="fas fa-trash"></i> Excluir
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-4">
+                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Nenhuma compra registrada</p>
+                <a href="{% url 'criar_compra_empresa' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Registrar Compra
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+/* Mobile Cards */
+.compras-mobile-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.compra-mobile-card {
+    background: rgba(51, 65, 85, 0.1);
+    border: 1px solid rgba(51, 65, 85, 0.2);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.compra-mobile-card:hover {
+    background: rgba(51, 65, 85, 0.15);
+    transform: translateY(-1px);
+}
+
+.compra-mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.compra-mobile-info {
+    flex: 1;
+}
+
+.compra-mobile-title {
+    font-weight: 600;
+    color: var(--foreground);
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+}
+
+.compra-mobile-value {
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: var(--primary);
+}
+
+.compra-mobile-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.compra-mobile-detail {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--dark-600);
+}
+
+.compra-mobile-detail i {
+    width: 1rem;
+    color: var(--primary);
+}
+
+.compra-mobile-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+</style>
+{% endblock %}

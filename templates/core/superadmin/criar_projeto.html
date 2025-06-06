@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Criar Projeto - Sistema WhatsApp{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Criar Projeto</h1>
+    <p class="page-subtitle">Adicione um novo projeto para cliente</p>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="card-title mb-0">
+            <i class="fas fa-project-diagram"></i>
+            Novo Projeto
+        </h2>
+        <a href="{% url 'projetos' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            <span class="btn-text">Voltar</span>
+        </a>
+    </div>
+    <div class="card-body">
+        <form method="post" class="form-horizontal">
+            {% csrf_token %}
+            
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <div class="form-group">
+                        <label for="{{ form.cliente.id_for_label }}" class="form-label">
+                            <i class="fas fa-user"></i>
+                            Cliente
+                        </label>
+                        {{ form.cliente }}
+                        {% if form.cliente.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.cliente.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.nome.id_for_label }}" class="form-label">
+                            <i class="fas fa-tag"></i>
+                            Nome do Projeto
+                        </label>
+                        {{ form.nome }}
+                        {% if form.nome.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.nome.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="form-group">
+                        <label for="{{ form.descricao.id_for_label }}" class="form-label">
+                            <i class="fas fa-align-left"></i>
+                            Descrição
+                        </label>
+                        {{ form.descricao }}
+                        {% if form.descricao.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.descricao.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <div class="form-group">
+                        <label for="{{ form.valor_total.id_for_label }}" class="form-label">
+                            <i class="fas fa-dollar-sign"></i>
+                            Valor Total
+                        </label>
+                        {{ form.valor_total }}
+                        {% if form.valor_total.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.valor_total.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.tipo_pagamento.id_for_label }}" class="form-label">
+                            <i class="fas fa-credit-card"></i>
+                            Tipo de Pagamento
+                        </label>
+                        {{ form.tipo_pagamento }}
+                        {% if form.tipo_pagamento.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.tipo_pagamento.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <div class="form-group">
+                        <label for="{{ form.valor_entrada.id_for_label }}" class="form-label">
+                            <i class="fas fa-hand-holding-usd"></i>
+                            Valor de Entrada
+                        </label>
+                        {{ form.valor_entrada }}
+                        {% if form.valor_entrada.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.valor_entrada.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <div class="form-group">
+                        <label for="{{ form.numero_parcelas.id_for_label }}" class="form-label">
+                            <i class="fas fa-list-ol"></i>
+                            Número de Parcelas
+                        </label>
+                        {{ form.numero_parcelas }}
+                        {% if form.numero_parcelas.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.numero_parcelas.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="{{ form.dia_vencimento_parcelas.id_for_label }}" class="form-label">
+                            <i class="fas fa-calendar-day"></i>
+                            Dia de Vencimento
+                        </label>
+                        {{ form.dia_vencimento_parcelas }}
+                        {% if form.dia_vencimento_parcelas.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.dia_vencimento_parcelas.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <div class="form-group">
+                        <label for="{{ form.status.id_for_label }}" class="form-label">
+                            <i class="fas fa-info-circle"></i>
+                            Status
+                        </label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.status.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <div class="form-group">
+                        <label for="{{ form.data_inicio.id_for_label }}" class="form-label">
+                            <i class="fas fa-calendar-alt"></i>
+                            Data de Início
+                        </label>
+                        {{ form.data_inicio }}
+                        {% if form.data_inicio.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.data_inicio.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="{{ form.data_conclusao.id_for_label }}" class="form-label">
+                            <i class="fas fa-calendar-check"></i>
+                            Data de Conclusão
+                        </label>
+                        {{ form.data_conclusao }}
+                        {% if form.data_conclusao.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.data_conclusao.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="form-group">
+                        <label for="{{ form.observacoes.id_for_label }}" class="form-label">
+                            <i class="fas fa-comment"></i>
+                            Observações
+                        </label>
+                        {{ form.observacoes }}
+                        {% if form.observacoes.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.observacoes.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    Criar Projeto
+                </button>
+                <a href="{% url 'projetos' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.form-group {
+    margin-bottom: 0;
+}
+
+.form-label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #374151;
+    display: block;
+}
+
+.form-label i {
+    margin-right: 0.5rem;
+    color: #6b7280;
+}
+
+.form-actions {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 1rem;
+}
+
+.invalid-feedback {
+    display: block;
+    color: #dc2626;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+@media (max-width: 768px) {
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
+{% endblock %}

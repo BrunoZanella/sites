@@ -1,0 +1,428 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Sistema WhatsApp{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle">Bem-vindo ao sistema de automação WhatsApp</p>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stats-card">
+        <div class="stats-card-content">
+            <div class="stats-card-info">
+                <h3 class="stats-card-title">Total de Contatos</h3>
+                <p class="stats-card-value">{{ total_contatos }}</p>
+                <div class="stats-card-trend">
+                    <span class="stats-card-trend-label">contatos cadastrados</span>
+                </div>
+            </div>
+            <div class="stats-card-icon green">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card">
+        <div class="stats-card-content">
+            <div class="stats-card-info">
+                <h3 class="stats-card-title">Mensagens Enviadas</h3>
+                <p class="stats-card-value">{{ contatos_enviados }}</p>
+                <div class="stats-card-trend">
+                    <span class="stats-card-trend-label">contatos alcançados</span>
+                </div>
+            </div>
+            <div class="stats-card-icon primary">
+                <i class="fas fa-paper-plane"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card">
+        <div class="stats-card-content">
+            <div class="stats-card-info">
+                <h3 class="stats-card-title">Pendentes</h3>
+                <p class="stats-card-value">{{ contatos_pendentes }}</p>
+                <div class="stats-card-trend">
+                    <span class="stats-card-trend-label">aguardando envio</span>
+                </div>
+            </div>
+            <div class="stats-card-icon yellow">
+                <i class="fas fa-clock"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-card">
+        <div class="stats-card-content">
+            <div class="stats-card-info">
+                <h3 class="stats-card-title">Mensagens Criadas</h3>
+                <p class="stats-card-value">{{ total_mensagens }}</p>
+                <div class="stats-card-trend">
+                    <span class="stats-card-trend-label">templates disponíveis</span>
+                </div>
+            </div>
+            <div class="stats-card-icon red">
+                <i class="fas fa-comment-alt"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Grid -->
+<div class="dashboard-content">
+    <!-- Ações Rápidas -->
+    <div class="card quick-actions-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-bolt"></i>
+                Ações Rápidas
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="quick-actions-grid">
+                <a href="{% url 'adicionar_contato' %}" class="quick-action-btn">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="quick-action-content">
+                        <span class="quick-action-title">Adicionar Contato</span>
+                        <span class="quick-action-subtitle">Novo contato manual</span>
+                    </div>
+                </a>
+                
+                <a href="{% url 'upload_contatos' %}" class="quick-action-btn">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-upload"></i>
+                    </div>
+                    <div class="quick-action-content">
+                        <span class="quick-action-title">Upload de Contatos</span>
+                        <span class="quick-action-subtitle">Importar arquivo</span>
+                    </div>
+                </a>
+                
+                <a href="{% url 'adicionar_mensagem' %}" class="quick-action-btn">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="quick-action-content">
+                        <span class="quick-action-title">Nova Mensagem</span>
+                        <span class="quick-action-subtitle">Criar template</span>
+                    </div>
+                </a>
+                
+                <a href="{% url 'configuracao' %}" class="quick-action-btn">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <div class="quick-action-content">
+                        <span class="quick-action-title">Configurações</span>
+                        <span class="quick-action-subtitle">Ajustar sistema</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensagens Recentes -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-comment-alt"></i>
+                Mensagens Recentes
+            </h2>
+            <a href="{% url 'mensagens' %}" class="card-action">Ver todas</a>
+        </div>
+        <div class="card-body">
+            {% for mensagem in mensagens_recentes %}
+            <div class="recent-item">
+                <div class="recent-item-content">
+                    <div class="recent-item-title">{{ mensagem.texto_mensagem|truncatechars:50 }}</div>
+                    <div class="recent-item-meta">
+                        <span class="recent-item-date">{{ mensagem.data_criacao|date:"d/m/Y H:i" }}</span>
+                        <span class="recent-item-separator">•</span>
+                        <span class="recent-item-info">{{ mensagem.quantidade_envios }}/{{ mensagem.quantidade_maxima }} envios</span>
+                    </div>
+                </div>
+                <div class="recent-item-status">
+                    {% if mensagem.ativa %}
+                        <span class="status-badge paid">Ativa</span>
+                    {% else %}
+                        <span class="status-badge overdue">Inativa</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i class="fas fa-comment-alt"></i>
+                <p>Nenhuma mensagem encontrada</p>
+                <a href="{% url 'adicionar_mensagem' %}" class="btn btn-primary btn-sm">Criar primeira mensagem</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Contatos Recentes -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-users"></i>
+                Contatos Recentes
+            </h2>
+            <a href="{% url 'contatos' %}" class="card-action">Ver todos</a>
+        </div>
+        <div class="card-body">
+            {% for contato in contatos_recentes %}
+            <div class="recent-item">
+                <div class="recent-item-content">
+                    <div class="recent-item-title">{{ contato.nome }}</div>
+                    <div class="recent-item-meta">
+                        <span class="recent-item-date">{{ contato.data_criacao|date:"d/m/Y H:i" }}</span>
+                        <span class="recent-item-separator">•</span>
+                        <span class="recent-item-info">{{ contato.numero }}</span>
+                    </div>
+                </div>
+                <div class="recent-item-status">
+                    {% if contato.enviado %}
+                        <span class="status-badge paid">Enviado</span>
+                    {% else %}
+                        <span class="status-badge pending">Pendente</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <p>Nenhum contato encontrado</p>
+                <a href="{% url 'adicionar_contato' %}" class="btn btn-primary btn-sm">Adicionar primeiro contato</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Dashboard específico para mobile */
+.dashboard-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+.quick-actions-card {
+    order: -1; /* Coloca as ações rápidas no topo */
+}
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.quick-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: linear-gradient(to right, rgba(30, 41, 59, 0.5), rgba(51, 65, 85, 0.3));
+    border: 1px solid rgba(51, 65, 85, 0.5);
+    border-radius: 0.75rem;
+    text-decoration: none;
+    color: var(--foreground);
+    transition: all 0.3s ease;
+}
+
+.quick-action-btn:hover {
+    background: linear-gradient(to right, rgba(0, 151, 57, 0.2), rgba(0, 176, 79, 0.1));
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 151, 57, 0.2);
+    color: var(--foreground);
+}
+
+.quick-action-icon {
+    width: 3rem;
+    height: 3rem;
+    background: linear-gradient(to bottom right, var(--primary), #00b04f);
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.quick-action-icon i {
+    color: white;
+    font-size: 1.25rem;
+}
+
+.quick-action-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.quick-action-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: white;
+}
+
+.quick-action-subtitle {
+    font-size: 0.875rem;
+    color: var(--dark-600);
+}
+
+.recent-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+.recent-item:last-child {
+    border-bottom: none;
+}
+
+.recent-item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.recent-item-title {
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.recent-item-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--dark-600);
+}
+
+.recent-item-separator {
+    color: var(--dark-500);
+}
+
+.recent-item-status {
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--dark-600);
+}
+
+.empty-state i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--dark-500);
+}
+
+.empty-state p {
+    margin-bottom: 1rem;
+}
+
+/* Mobile específico */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .stats-card {
+        padding: 1rem;
+    }
+    
+    .stats-card-value {
+        font-size: 1.25rem;
+    }
+    
+    .stats-card-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+    
+    .stats-card-icon i {
+        font-size: 1.25rem;
+    }
+    
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .quick-action-btn {
+        padding: 0.75rem;
+    }
+    
+    .quick-action-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+    
+    .quick-action-icon i {
+        font-size: 1rem;
+    }
+    
+    .quick-action-title {
+        font-size: 0.875rem;
+    }
+    
+    .quick-action-subtitle {
+        font-size: 0.75rem;
+    }
+    
+    .recent-item {
+        padding: 0.75rem 0;
+    }
+    
+    .recent-item-title {
+        font-size: 0.875rem;
+    }
+    
+    .recent-item-meta {
+        font-size: 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    .recent-item-status {
+        margin-left: 0.5rem;
+    }
+    
+    .status-badge {
+        font-size: 0.625rem;
+        padding: 0.125rem 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .recent-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .recent-item-status {
+        margin-left: 0;
+        align-self: flex-end;
+    }
+}
+</style>
+{% endblock %}
