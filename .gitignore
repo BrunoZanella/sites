@@ -1,0 +1,8 @@
+# Ignorar ambientes virtuais
+venv/
+
+# Ignorar arquivos de credenciais
+credentials.json
+
+# Ignorar banco de dados SQLite
+db.sqlite3
