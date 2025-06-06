@@ -1233,6 +1233,56 @@
         </div>
     </div>
 
+    <!-- Charts Row 4 -->
+    <div class="charts-row">
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <h2 class="dashboard-panel-title">
+                    <i class="fas fa-file-invoice-dollar"></i> Parcelas por Status
+                </h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="parcelasStatusChart"></canvas>
+            </div>
+        </div>
+
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <h2 class="dashboard-panel-title">
+                    <i class="fas fa-shopping-cart"></i> Compras por Status
+                </h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="comprasStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 5 -->
+    <div class="charts-row">
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <h2 class="dashboard-panel-title">
+                    <i class="fas fa-tasks"></i> Projetos por Status
+                </h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="projetosStatusChart"></canvas>
+            </div>
+        </div>
+
+        <div class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <h2 class="dashboard-panel-title">
+                    <i class="fas fa-server"></i> Serviços por Status
+                </h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="servicosStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Estado global da aplicação
         let currentState = {
@@ -1272,7 +1322,19 @@
             categorias_despesa_cores: {{ categorias_despesa_cores|safe|default:'[]' }},
             fluxo_caixa_labels: {{ fluxo_caixa_labels|safe|default:'[]' }},
             fluxo_caixa_entradas: {{ fluxo_caixa_entradas|safe|default:'[]' }},
-            fluxo_caixa_saidas: {{ fluxo_caixa_saidas|safe|default:'[]' }}
+            fluxo_caixa_saidas: {{ fluxo_caixa_saidas|safe|default:'[]' }},
+            parcelas_status_labels: {{ parcelas_status_labels|safe|default:'[]' }},
+            parcelas_status_valores: {{ parcelas_status_valores|safe|default:'[]' }},
+            parcelas_status_cores: {{ parcelas_status_cores|safe|default:'[]' }},
+            compras_status_labels: {{ compras_status_labels|safe|default:'[]' }},
+            compras_status_valores: {{ compras_status_valores|safe|default:'[]' }},
+            compras_status_cores: {{ compras_status_cores|safe|default:'[]' }},
+            projetos_status_labels: {{ projetos_status_labels|safe|default:'[]' }},
+            projetos_status_valores: {{ projetos_status_valores|safe|default:'[]' }},
+            projetos_status_cores: {{ projetos_status_cores|safe|default:'[]' }},
+            servicos_status_labels: {{ servicos_status_labels|safe|default:'[]' }},
+            servicos_status_valores: {{ servicos_status_valores|safe|default:'[]' }},
+            servicos_status_cores: {{ servicos_status_cores|safe|default:'[]' }}
         };
 
         const colors = {
@@ -1290,6 +1352,10 @@
         let expensesChart;
         let periodComparisonChart;
         let cashflowChart;
+        let parcelasStatusChart;
+        let comprasStatusChart;
+        let projetosStatusChart;
+        let servicosStatusChart;
 
         // Dropdown Functions
         function toggleDropdown(dropdownId) {
@@ -1793,6 +1859,76 @@
                             }
                         }
                     }
+                });
+            }
+
+            // Parcelas Status Chart
+            const parcelasCtx = document.getElementById('parcelasStatusChart');
+            if (parcelasCtx) {
+                parcelasStatusChart = new Chart(parcelasCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: chartsData.parcelas_status_labels,
+                        datasets: [{
+                            data: chartsData.parcelas_status_valores,
+                            backgroundColor: chartsData.parcelas_status_cores,
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: getDoughnutOptions()
+                });
+            }
+
+            // Compras Status Chart
+            const comprasCtx = document.getElementById('comprasStatusChart');
+            if (comprasCtx) {
+                comprasStatusChart = new Chart(comprasCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartsData.compras_status_labels,
+                        datasets: [{
+                            data: chartsData.compras_status_valores,
+                            backgroundColor: chartsData.compras_status_cores,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: getBarChartOptions()
+                });
+            }
+
+            // Projetos Status Chart
+            const projetosCtx = document.getElementById('projetosStatusChart');
+            if (projetosCtx) {
+                projetosStatusChart = new Chart(projetosCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: chartsData.projetos_status_labels,
+                        datasets: [{
+                            data: chartsData.projetos_status_valores,
+                            backgroundColor: chartsData.projetos_status_cores,
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: getDoughnutOptions()
+                });
+            }
+
+            // Servicos Status Chart
+            const servicosCtx = document.getElementById('servicosStatusChart');
+            if (servicosCtx) {
+                servicosStatusChart = new Chart(servicosCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartsData.servicos_status_labels,
+                        datasets: [{
+                            data: chartsData.servicos_status_valores,
+                            backgroundColor: chartsData.servicos_status_cores,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: getBarChartOptions()
                 });
             }
         }
