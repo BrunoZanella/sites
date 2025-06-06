@@ -596,7 +596,7 @@ def superadmin_deletar_usuario_view(request, user_id):
 def minha_empresa_view(request):
     from django.db.models import Sum
     from .models import GastoFixo, CompraEmpresa, Projeto, ServicoHospedagem, Notificacao
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, date
     
     # Estatísticas
     total_gastos_fixos = GastoFixo.objects.filter(ativo=True).aggregate(Sum('valor'))['valor__sum'] or 0
@@ -650,7 +650,7 @@ def dashboard_financeiro_view(request):
     from django.db.models import Sum, Avg, Count, F, Q, Case, When, Value, DecimalField
     from .models import GastoFixo, CompraEmpresa, Projeto, ServicoHospedagem, Cliente, ParcelaProjeto
     import json
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, date
     from dateutil.relativedelta import relativedelta
     from decimal import Decimal
     
