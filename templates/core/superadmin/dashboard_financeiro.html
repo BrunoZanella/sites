@@ -1381,6 +1381,7 @@
             servicos_status_cores: {{ servicos_status_cores|safe|default:'[]' }},
             top_clientes_labels: {{ top_clientes_labels|safe|default:'[]' }},
             top_clientes_valores: {{ top_clientes_valores|safe|default:'[]' }}
+            servicos_status_cores: {{ servicos_status_cores|safe|default:'[]' }}
         };
 
         const colors = {
@@ -1403,6 +1404,7 @@
         let projetosStatusChart;
         let servicosStatusChart;
         let topClientesChart;
+
 
         // Dropdown Functions
         function toggleDropdown(dropdownId) {
@@ -1995,6 +1997,7 @@
                     options: getBarChartOptions()
                 });
             }
+
         }
 
         // Atualizar gráfico de evolução financeira
