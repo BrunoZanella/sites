@@ -596,7 +596,7 @@ def superadmin_deletar_usuario_view(request, user_id):
 def minha_empresa_view(request):
     from django.db.models import Sum
     from .models import GastoFixo, CompraEmpresa, Projeto, ServicoHospedagem, Notificacao
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, date
     
     # Estatísticas
     total_gastos_fixos = GastoFixo.objects.filter(ativo=True).aggregate(Sum('valor'))['valor__sum'] or 0
@@ -650,7 +650,7 @@ def dashboard_financeiro_view(request):
     from django.db.models import Sum, Avg, Count, F, Q, Case, When, Value, DecimalField
     from .models import GastoFixo, CompraEmpresa, Projeto, ServicoHospedagem, Cliente, ParcelaProjeto
     import json
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, date
     from dateutil.relativedelta import relativedelta
     from decimal import Decimal
     
@@ -886,11 +886,69 @@ def dashboard_financeiro_view(request):
         receitas_mensais.append(float(receita_mes))
         despesas_mensais.append(float(despesa_mes))
         lucros_mensais.append(float(lucro_mes))
+
+    # Dados trimestrais e anuais para comparativos mais amplos
+    trimestres_labels = []
+    receitas_trimestrais = []
+    despesas_trimestrais = []
+    lucros_trimestrais = []
+
+    for i in range(3, -1, -1):
+        tri_inicio = hoje - relativedelta(months=i*3)
+        tri_inicio = tri_inicio.replace(month=((tri_inicio.month - 1)//3)*3 + 1, day=1)
+        tri_fim = (tri_inicio + relativedelta(months=3)) - timedelta(days=1)
+        trimestres_labels.append(f"T{((tri_inicio.month-1)//3)+1}/{tri_inicio.year}")
+
+        receita_tri = Projeto.objects.filter(
+            data_inicio__gte=tri_inicio,
+            data_inicio__lte=tri_fim
+        ).aggregate(total=Sum('valor_total'))['total'] or Decimal('0.00')
+
+        compras_tri = CompraEmpresa.objects.filter(
+            data_compra__gte=tri_inicio,
+            data_compra__lte=tri_fim
+        ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+        despesa_tri = compras_tri + (gastos_fixos_total + servicos_total) * Decimal('3')
+        lucro_tri = receita_tri - despesa_tri
+
+        receitas_trimestrais.append(float(receita_tri))
+        despesas_trimestrais.append(float(despesa_tri))
+        lucros_trimestrais.append(float(lucro_tri))
+
+    anos_labels = []
+    receitas_anuais = []
+    despesas_anuais = []
+    lucros_anuais = []
+
+    for i in range(3, -1, -1):
+        ano = hoje.year - i
+        ano_inicio = date(ano, 1, 1)
+        ano_fim = date(ano, 12, 31)
+        anos_labels.append(str(ano))
+
+        receita_ano = Projeto.objects.filter(
+            data_inicio__gte=ano_inicio,
+            data_inicio__lte=ano_fim
+        ).aggregate(total=Sum('valor_total'))['total'] or Decimal('0.00')
+
+        compras_ano = CompraEmpresa.objects.filter(
+            data_compra__gte=ano_inicio,
+            data_compra__lte=ano_fim
+        ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+        despesa_ano = compras_ano + (gastos_fixos_total + servicos_total) * Decimal('12')
+        lucro_ano = receita_ano - despesa_ano
+
+        receitas_anuais.append(float(receita_ano))
+        despesas_anuais.append(float(despesa_ano))
+        lucros_anuais.append(float(lucro_ano))
     
     # Categorias de receita (baseado nos tipos de projeto)
     categorias_receita = []
     categorias_receita_labels = []
     categorias_receita_valores = []
+    categorias_receita_cores = []
     
     # Obter categorias reais dos projetos
     tipos_projeto = receitas_periodo.values('tipo').annotate(
@@ -917,14 +975,16 @@ def dashboard_financeiro_view(request):
             'percentual': percentual,
             'cor': cor
         })
-        
+
         categorias_receita_labels.append(tipo['tipo'] or 'Sem categoria')
         categorias_receita_valores.append(float(tipo['total']))
+        categorias_receita_cores.append(cor)
     
     # Categorias de despesa
     categorias_despesa = []
     categorias_despesa_labels = []
     categorias_despesa_valores = []
+    categorias_despesa_cores = []
     
     # Gastos fixos por categoria
     gastos_por_categoria = gastos_fixos.values('categoria').annotate(
@@ -971,9 +1031,10 @@ def dashboard_financeiro_view(request):
             'percentual': percentual,
             'cor': cor
         })
-        
+
         categorias_despesa_labels.append(categoria)
         categorias_despesa_valores.append(float(valor))
+        categorias_despesa_cores.append(cor)
     
     # Top clientes
     top_clientes = []
@@ -1010,6 +1071,9 @@ def dashboard_financeiro_view(request):
                 'status': 'ativo',
                 'get_status_display': 'Ativo'
             })
+
+    top_clientes_labels = [c['nome'] for c in top_clientes[:5]]
+    top_clientes_valores = [float(c['receita_total']) for c in top_clientes[:5]]
     
     # Alertas financeiros
     alertas = []
@@ -1054,6 +1118,41 @@ def dashboard_financeiro_view(request):
         # Saídas projetadas
         saida_projetada = float(gastos_fixos_total + servicos_total)
         fluxo_caixa_saidas.append(saida_projetada)
+
+    # Distribuição de status para relatórios detalhados
+    status_colors = {
+        'pendente': '#FBBF24',
+        'paga': '#10B981',
+        'vencida': '#EF4444',
+        'cancelada': '#6B7280',
+        'planejada': '#3B82F6',
+        'aprovada': '#10B981',
+        'comprada': '#F59E0B',
+        'entregue': '#8B5CF6',
+        'orcamento': '#6B7280',
+        'desenvolvimento': '#3B82F6',
+        'concluido': '#10B981',
+        'ativo': '#10B981',
+        'suspenso': '#FBBF24',
+        'expirado': '#EF4444'
+    }
+
+    def get_status_data(queryset, status_choices):
+        result = queryset.values('status').annotate(total=Count('id'))
+        labels = []
+        valores = []
+        cores = []
+        for item in result:
+            key = item['status']
+            labels.append(dict(status_choices).get(key, key))
+            valores.append(item['total'])
+            cores.append(status_colors.get(key, '#3B82F6'))
+        return labels, valores, cores
+
+    parcelas_status_labels, parcelas_status_valores, parcelas_status_cores = get_status_data(ParcelaProjeto.objects.all(), ParcelaProjeto.STATUS_CHOICES)
+    compras_status_labels, compras_status_valores, compras_status_cores = get_status_data(CompraEmpresa.objects.all(), CompraEmpresa.STATUS_CHOICES)
+    projetos_status_labels, projetos_status_valores, projetos_status_cores = get_status_data(Projeto.objects.all(), Projeto.STATUS_CHOICES)
+    servicos_status_labels, servicos_status_valores, servicos_status_cores = get_status_data(ServicoHospedagem.objects.all(), ServicoHospedagem.STATUS_CHOICES)
     
     # Dados padrão para datas
     data_inicio_default = inicio_periodo.strftime('%Y-%m-%d')
@@ -1073,6 +1172,9 @@ def dashboard_financeiro_view(request):
         'lucro_liquido': lucro_liquido,
         'margem_lucro': margem_lucro,
         'fluxo_caixa': fluxo_caixa,
+        'gastos_fixos_total': gastos_fixos_total,
+        'compras_total': compras_total,
+        'servicos_total': servicos_total,
         
         # Comparações
         'receita_comparacao': receita_comparacao,
@@ -1094,23 +1196,49 @@ def dashboard_financeiro_view(request):
         'receitas_mensais': json.dumps(receitas_mensais),
         'despesas_mensais': json.dumps(despesas_mensais),
         'lucros_mensais': json.dumps(lucros_mensais),
+        'trimestres_labels': json.dumps(trimestres_labels),
+        'receitas_trimestrais': json.dumps(receitas_trimestrais),
+        'despesas_trimestrais': json.dumps(despesas_trimestrais),
+        'lucros_trimestrais': json.dumps(lucros_trimestrais),
+        'anos_labels': json.dumps(anos_labels),
+        'receitas_anuais': json.dumps(receitas_anuais),
+        'despesas_anuais': json.dumps(despesas_anuais),
+        'lucros_anuais': json.dumps(lucros_anuais),
         
         # Categorias
         'categorias_receita': categorias_receita,
         'categorias_receita_labels': json.dumps(categorias_receita_labels),
         'categorias_receita_valores': json.dumps(categorias_receita_valores),
+        'categorias_receita_cores': json.dumps(categorias_receita_cores),
         'categorias_despesa': categorias_despesa,
         'categorias_despesa_labels': json.dumps(categorias_despesa_labels),
         'categorias_despesa_valores': json.dumps(categorias_despesa_valores),
+        'categorias_despesa_cores': json.dumps(categorias_despesa_cores),
         
         # Clientes e alertas
         'top_clientes': top_clientes,
+        'top_clientes_labels': json.dumps(top_clientes_labels),
+        'top_clientes_valores': json.dumps(top_clientes_valores),
         'alertas': alertas,
         
         # Fluxo de caixa
         'fluxo_caixa_labels': json.dumps(fluxo_caixa_labels),
         'fluxo_caixa_entradas': json.dumps(fluxo_caixa_entradas),
         'fluxo_caixa_saidas': json.dumps(fluxo_caixa_saidas),
+
+        # Status charts
+        'parcelas_status_labels': json.dumps(parcelas_status_labels),
+        'parcelas_status_valores': json.dumps(parcelas_status_valores),
+        'parcelas_status_cores': json.dumps(parcelas_status_cores),
+        'compras_status_labels': json.dumps(compras_status_labels),
+        'compras_status_valores': json.dumps(compras_status_valores),
+        'compras_status_cores': json.dumps(compras_status_cores),
+        'projetos_status_labels': json.dumps(projetos_status_labels),
+        'projetos_status_valores': json.dumps(projetos_status_valores),
+        'projetos_status_cores': json.dumps(projetos_status_cores),
+        'servicos_status_labels': json.dumps(servicos_status_labels),
+        'servicos_status_valores': json.dumps(servicos_status_valores),
+        'servicos_status_cores': json.dumps(servicos_status_cores),
     }
     
     return render(request, 'core/superadmin/dashboard_financeiro.html', context)
