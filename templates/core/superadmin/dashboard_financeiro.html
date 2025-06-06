@@ -1006,6 +1006,36 @@
                         <i class="fas fa-percentage"></i>
                     </div>
                 </div>
+
+                <div class="kpi-item">
+                    <div class="kpi-info">
+                        <span class="kpi-label">Gastos Fixos</span>
+                        <span class="kpi-value">R$ {{ gastos_fixos_total|floatformat:2|default:"0,00" }}</span>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                </div>
+
+                <div class="kpi-item">
+                    <div class="kpi-info">
+                        <span class="kpi-label">Compras</span>
+                        <span class="kpi-value">R$ {{ compras_total|floatformat:2|default:"0,00" }}</span>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                </div>
+
+                <div class="kpi-item">
+                    <div class="kpi-info">
+                        <span class="kpi-label">Serviços</span>
+                        <span class="kpi-value">R$ {{ servicos_total|floatformat:2|default:"0,00" }}</span>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="fas fa-server"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1283,6 +1313,20 @@
         </div>
     </div>
 
+    <!-- Charts Row 6 -->
+    <div class="charts-row">
+        <div class="dashboard-panel" style="grid-column: 1 / -1;">
+            <div class="dashboard-panel-header">
+                <h2 class="dashboard-panel-title">
+                    <i class="fas fa-star"></i> Top Clientes por Receita
+                </h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="topClientesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Estado global da aplicação
         let currentState = {
@@ -1334,6 +1378,9 @@
             projetos_status_cores: {{ projetos_status_cores|safe|default:'[]' }},
             servicos_status_labels: {{ servicos_status_labels|safe|default:'[]' }},
             servicos_status_valores: {{ servicos_status_valores|safe|default:'[]' }},
+            servicos_status_cores: {{ servicos_status_cores|safe|default:'[]' }},
+            top_clientes_labels: {{ top_clientes_labels|safe|default:'[]' }},
+            top_clientes_valores: {{ top_clientes_valores|safe|default:'[]' }}
             servicos_status_cores: {{ servicos_status_cores|safe|default:'[]' }}
         };
 
@@ -1356,6 +1403,8 @@
         let comprasStatusChart;
         let projetosStatusChart;
         let servicosStatusChart;
+        let topClientesChart;
+
 
         // Dropdown Functions
         function toggleDropdown(dropdownId) {
@@ -1931,6 +1980,24 @@
                     options: getBarChartOptions()
                 });
             }
+
+            // Top Clientes Chart
+            const topClientesCtx = document.getElementById('topClientesChart');
+            if (topClientesCtx) {
+                topClientesChart = new Chart(topClientesCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartsData.top_clientes_labels,
+                        datasets: [{
+                            data: chartsData.top_clientes_valores,
+                            backgroundColor: colors.primary,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: getBarChartOptions()
+                });
+            }
+
         }
 
         // Atualizar gráfico de evolução financeira

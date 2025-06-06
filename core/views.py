@@ -948,6 +948,7 @@ def dashboard_financeiro_view(request):
     categorias_receita = []
     categorias_receita_labels = []
     categorias_receita_valores = []
+    categorias_receita_cores = []
     
     # Obter categorias reais dos projetos
     tipos_projeto = receitas_periodo.values('tipo').annotate(
@@ -974,14 +975,16 @@ def dashboard_financeiro_view(request):
             'percentual': percentual,
             'cor': cor
         })
-        
+
         categorias_receita_labels.append(tipo['tipo'] or 'Sem categoria')
         categorias_receita_valores.append(float(tipo['total']))
+        categorias_receita_cores.append(cor)
     
     # Categorias de despesa
     categorias_despesa = []
     categorias_despesa_labels = []
     categorias_despesa_valores = []
+    categorias_despesa_cores = []
     
     # Gastos fixos por categoria
     gastos_por_categoria = gastos_fixos.values('categoria').annotate(
@@ -1028,9 +1031,10 @@ def dashboard_financeiro_view(request):
             'percentual': percentual,
             'cor': cor
         })
-        
+
         categorias_despesa_labels.append(categoria)
         categorias_despesa_valores.append(float(valor))
+        categorias_despesa_cores.append(cor)
     
     # Top clientes
     top_clientes = []
@@ -1067,6 +1071,9 @@ def dashboard_financeiro_view(request):
                 'status': 'ativo',
                 'get_status_display': 'Ativo'
             })
+
+    top_clientes_labels = [c['nome'] for c in top_clientes[:5]]
+    top_clientes_valores = [float(c['receita_total']) for c in top_clientes[:5]]
     
     # Alertas financeiros
     alertas = []
@@ -1165,6 +1172,9 @@ def dashboard_financeiro_view(request):
         'lucro_liquido': lucro_liquido,
         'margem_lucro': margem_lucro,
         'fluxo_caixa': fluxo_caixa,
+        'gastos_fixos_total': gastos_fixos_total,
+        'compras_total': compras_total,
+        'servicos_total': servicos_total,
         
         # Comparações
         'receita_comparacao': receita_comparacao,
@@ -1199,12 +1209,16 @@ def dashboard_financeiro_view(request):
         'categorias_receita': categorias_receita,
         'categorias_receita_labels': json.dumps(categorias_receita_labels),
         'categorias_receita_valores': json.dumps(categorias_receita_valores),
+        'categorias_receita_cores': json.dumps(categorias_receita_cores),
         'categorias_despesa': categorias_despesa,
         'categorias_despesa_labels': json.dumps(categorias_despesa_labels),
         'categorias_despesa_valores': json.dumps(categorias_despesa_valores),
+        'categorias_despesa_cores': json.dumps(categorias_despesa_cores),
         
         # Clientes e alertas
         'top_clientes': top_clientes,
+        'top_clientes_labels': json.dumps(top_clientes_labels),
+        'top_clientes_valores': json.dumps(top_clientes_valores),
         'alertas': alertas,
         
         # Fluxo de caixa
